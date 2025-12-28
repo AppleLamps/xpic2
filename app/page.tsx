@@ -12,6 +12,7 @@ import {
   Heart,
   Coffee,
   DollarSign,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -259,8 +260,9 @@ export default function Home() {
                   Powered by Grok AI
                 </div>
 
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9]">
-                  X-<span className="gradient-text">pressionist</span>
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] flex items-baseline gap-1">
+                  <img src="/x-logo.png" alt="X" className="h-[0.75em] inline-block" />
+                  <span className="gradient-text">pressionist</span>
                 </h1>
                 <p className="text-xl text-neutral-400 max-w-md leading-relaxed font-light">
                   Turn any X timeline into bespoke AI artwork.<br />
@@ -316,9 +318,11 @@ export default function Home() {
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-500/20 rounded-full blur-[100px] pointer-events-none"></div>
 
                     <div className="space-y-6 relative">
-                      <div className="text-center space-y-2">
-                        <h2 className="text-3xl font-bold text-white">2025</h2>
-                        <p className="text-rose-500 font-medium tracking-widest text-xs uppercase">Wrapped</p>
+                      <div className="text-center">
+                        <h2 className="text-2xl font-black tracking-tighter text-white flex items-center justify-center gap-0.5">
+                          <img src="/x-logo.png" alt="X" className="h-[0.8em] inline-block" />
+                          <span className="gradient-text">pressionist</span>
+                        </h2>
                       </div>
 
                       <div className="space-y-3">
@@ -347,22 +351,32 @@ export default function Home() {
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
                           <button
-                            onClick={handleRoast}
+                            onClick={handleGenerate}
                             disabled={isBusy}
-                            className="px-4 py-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-medium rounded-xl hover:bg-amber-500/20 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                            className="w-full px-4 py-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium rounded-xl hover:bg-rose-500/20 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
                           >
-                            <Flame className="w-4 h-4" />
-                            Roast
+                            <Sparkles className="w-4 h-4" />
+                            Generate Photo
                           </button>
-                          <button
-                            onClick={handleFbiProfile}
-                            disabled={isBusy}
-                            className="px-4 py-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium rounded-xl hover:bg-blue-500/20 transition-colors disabled:opacity-50 text-sm"
-                          >
-                            FBI Profile
-                          </button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={handleRoast}
+                              disabled={isBusy}
+                              className="px-4 py-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-medium rounded-xl hover:bg-amber-500/20 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                            >
+                              <Flame className="w-4 h-4" />
+                              Roast
+                            </button>
+                            <button
+                              onClick={handleFbiProfile}
+                              disabled={isBusy}
+                              className="px-4 py-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium rounded-xl hover:bg-blue-500/20 transition-colors disabled:opacity-50 text-sm"
+                            >
+                              FBI Profile
+                            </button>
+                          </div>
                         </div>
                       </div>
 

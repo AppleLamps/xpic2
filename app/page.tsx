@@ -218,46 +218,51 @@ export default function Home() {
     <SidebarProvider defaultOpen={false}>
       <PromptHistorySidebar history={history} onDelete={deleteFromHistory} onClearAll={clearHistory} />
 
-      <div className="relative min-h-screen w-full flex-1">
-        {/* Subtle background */}
-        <div className="aurora-background fixed inset-0" />
+      <div className="relative min-h-screen w-full flex-1 overflow-hidden">
+        {/* Wrapped background */}
+        <div className="wrapped-background fixed inset-0" />
 
         {/* History trigger */}
         <div className="fixed top-6 left-6 z-50">
-          <SidebarTrigger className="p-3 bg-white rounded-xl border border-black/10 shadow-lg hover:shadow-xl transition-shadow">
-            <History className="h-5 w-5 text-black" />
+          <SidebarTrigger className="p-3 bg-black/20 backdrop-blur-md rounded-xl border border-white/10 shadow-lg hover:bg-white/10 transition-all text-white">
+            <History className="h-5 w-5" />
           </SidebarTrigger>
         </div>
 
         {/* Full-page loading overlay */}
         {(isLoading || isRoasting || isProfiling) && (
-          <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center">
             <div className="text-center space-y-6">
-              <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto" />
+              <div className="w-16 h-16 border-4 border-white/20 border-t-[#ff4d4d] rounded-full animate-spin mx-auto" />
               <div>
-                <p className="text-2xl font-semibold text-black">
+                <p className="text-2xl font-semibold text-white">
                   {isLoading && loadingStage === 'analyze' && 'Reading the vibes...'}
                   {isLoading && loadingStage === 'image' && 'Painting your portrait...'}
                   {isRoasting && 'Crafting your roast...'}
                   {isProfiling && 'Analyzing behavior patterns...'}
                 </p>
-                <p className="text-neutral-500 mt-2">This takes about 10 seconds</p>
+                <p className="text-neutral-400 mt-2">This takes about 10 seconds</p>
               </div>
             </div>
           </div>
         )}
 
-        <main className="relative z-10 min-h-screen px-6 lg:px-12 py-16 lg:py-24">
-          <div className="max-w-6xl mx-auto space-y-24">
+        <main className="relative z-10 min-h-screen px-6 lg:px-12 py-16 lg:py-24 flex flex-col justify-center">
+          <div className="max-w-6xl mx-auto w-full space-y-24">
 
             {/* Hero Section - Asymmetrical */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center min-h-[60vh]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               {/* Left: Title & Description */}
-              <div className="space-y-6">
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-black leading-none">
-                  X-pressionist
+              <div className="space-y-8">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-amber-500 mb-4">
+                  <Flame className="w-3 h-3" />
+                  Powered by Grok AI
+                </div>
+
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9]">
+                  X-<span className="gradient-text">pressionist</span>
                 </h1>
-                <p className="text-xl text-neutral-600 max-w-md leading-relaxed">
+                <p className="text-xl text-neutral-400 max-w-md leading-relaxed font-light">
                   Turn any X timeline into bespoke AI artwork.<br />
                   No login. No API keys. Just a username.
                 </p>
@@ -265,30 +270,30 @@ export default function Home() {
                 {/* Support link */}
                 <Dialog open={donateOpen} onOpenChange={setDonateOpen}>
                   <DialogTrigger asChild>
-                    <button className="text-sm text-neutral-400 hover:text-black transition-colors flex items-center gap-1">
-                      <Heart className="w-4 h-4" />
+                    <button className="text-sm text-neutral-500 hover:text-white transition-colors flex items-center gap-2 group">
+                      <Heart className="w-4 h-4 group-hover:text-rose-500 transition-colors" />
                       Support this project
                     </button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-md bg-neutral-900 border-white/10 text-white">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2 text-xl">
                         <Heart className="w-5 h-5 text-rose-500" />
                         Support X-pressionist
                       </DialogTitle>
-                      <DialogDescription>
+                      <DialogDescription className="text-neutral-400">
                         Every donation goes straight to API costs. Thank you.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3 pt-4">
                       <a href="https://buymeacoffee.com/applelampsg" target="_blank" rel="noopener noreferrer" className="block">
-                        <Button className="w-full h-12" onClick={() => setDonateOpen(false)}>
+                        <Button className="w-full h-12 bg-[#FFDD00] text-black hover:bg-[#FFDD00]/90" onClick={() => setDonateOpen(false)}>
                           <Coffee className="w-5 h-5 mr-2" />
                           Buy Me a Coffee
                         </Button>
                       </a>
                       <a href="https://cash.app/$applelamps" target="_blank" rel="noopener noreferrer" className="block">
-                        <Button variant="outline" className="w-full h-12" onClick={() => setDonateOpen(false)}>
+                        <Button variant="outline" className="w-full h-12 border-white/10 hover:bg-white/5 text-white" onClick={() => setDonateOpen(false)}>
                           <DollarSign className="w-5 h-5 mr-2" />
                           CashApp: $applelamps
                         </Button>
@@ -298,93 +303,113 @@ export default function Home() {
                 </Dialog>
               </div>
 
-              {/* Right: Input Form */}
-              <div className="bg-white rounded-2xl border border-black/10 p-6 lg:p-8 shadow-2xl shadow-black/5">
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex-1 relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-medium">@</span>
-                      <input
-                        type="text"
-                        value={handle}
-                        onChange={(e) => {
-                          setHandle(e.target.value);
-                          if (inputError) setInputError('');
-                        }}
-                        onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleGenerate()}
-                        disabled={isBusy}
-                        placeholder="username"
-                        className="w-full pl-10 pr-4 py-4 text-lg bg-neutral-50 border border-black/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 transition-shadow"
-                        autoComplete="off"
-                        spellCheck={false}
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button
-                        onClick={handleGenerate}
-                        disabled={isBusy}
-                        className="px-4 py-3 bg-black text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 text-sm"
-                      >
-                        Artwork
-                      </button>
-                      <button
-                        onClick={handleRoast}
-                        disabled={isBusy}
-                        className="px-4 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-1.5"
-                      >
-                        <Flame className="w-4 h-4" />
-                        Roast
-                      </button>
-                      <button
-                        onClick={handleFbiProfile}
-                        disabled={isBusy}
-                        className="px-4 py-3 bg-neutral-700 text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 text-sm"
-                      >
-                        FBI Profile
-                      </button>
+              {/* Right: Input Form - Phone Style */}
+              <div className="relative mx-auto w-full max-w-[400px]">
+                {/* Phone Frame */}
+                <div className="relative bg-[#0a0a0a] rounded-[3rem] border-[8px] border-[#1a1a1a] shadow-2xl overflow-hidden h-[600px] flex flex-col">
+                  {/* Dynamic Island */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 h-7 w-32 bg-black rounded-b-2xl z-20"></div>
+
+                  {/* Screen Content */}
+                  <div className="flex-1 p-6 flex flex-col justify-center relative z-10">
+                    {/* Glow effect inside phone */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+                    <div className="space-y-6 relative">
+                      <div className="text-center space-y-2">
+                        <h2 className="text-3xl font-bold text-white">2025</h2>
+                        <p className="text-rose-500 font-medium tracking-widest text-xs uppercase">Wrapped</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="relative group">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 text-lg font-medium group-focus-within:text-rose-500 transition-colors">@</span>
+                          <input
+                            type="text"
+                            value={handle}
+                            onChange={(e) => {
+                              setHandle(e.target.value);
+                              if (inputError) setInputError('');
+                            }}
+                            onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleGenerate()}
+                            disabled={isBusy}
+                            placeholder="username"
+                            className="w-full pl-10 pr-12 py-4 text-lg bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500/50 transition-all"
+                            autoComplete="off"
+                            spellCheck={false}
+                          />
+                          <button
+                            onClick={handleGenerate}
+                            disabled={isBusy || !handle}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 disabled:opacity-0 transition-all"
+                          >
+                            <ChevronDown className="-rotate-90 w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={handleRoast}
+                            disabled={isBusy}
+                            className="px-4 py-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-medium rounded-xl hover:bg-amber-500/20 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
+                          >
+                            <Flame className="w-4 h-4" />
+                            Roast
+                          </button>
+                          <button
+                            onClick={handleFbiProfile}
+                            disabled={isBusy}
+                            className="px-4 py-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium rounded-xl hover:bg-blue-500/20 transition-colors disabled:opacity-50 text-sm"
+                          >
+                            FBI Profile
+                          </button>
+                        </div>
+                      </div>
+
+                      {inputError && (
+                        <p className="text-sm text-red-500 text-center bg-red-500/10 py-2 rounded-lg">{inputError}</p>
+                      )}
+
+                      {/* Quick suggestions */}
+                      <div className="flex flex-wrap justify-center gap-2 text-xs pt-4">
+                        {SUGGESTION_HANDLES.map((s) => (
+                          <button
+                            key={s}
+                            onClick={() => {
+                              setHandle(s);
+                              setInputError('');
+                            }}
+                            disabled={isBusy}
+                            className="px-3 py-1.5 rounded-full bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+                          >
+                            @{s}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {inputError && (
-                    <p className="text-sm text-red-500">{inputError}</p>
-                  )}
-
-                  {/* Quick suggestions */}
-                  <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="text-neutral-400">Try:</span>
-                    {SUGGESTION_HANDLES.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => {
-                          setHandle(s);
-                          setInputError('');
-                        }}
-                        disabled={isBusy}
-                        className="text-black hover:underline disabled:opacity-50"
-                      >
-                        @{s}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Phone Bottom Bar */}
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full"></div>
                 </div>
               </div>
             </div>
 
             {/* Error */}
             {globalError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-center max-w-2xl mx-auto">
                 {globalError}
               </div>
             )}
 
             {/* Results Section */}
             {result && (
-              <div className="space-y-8" id="results">
+              <div className="space-y-8 animate-fade-in" id="results">
                 {/* Generated Image */}
-                <div className="relative rounded-2xl overflow-hidden border border-black/10 shadow-2xl shadow-black/10 bg-white">
+                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 bg-[#0a0a0a]">
                   {isImageLoading && (
-                    <div className="aspect-square max-w-2xl mx-auto flex items-center justify-center bg-neutral-50">
-                      <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+                    <div className="aspect-square max-w-2xl mx-auto flex items-center justify-center bg-white/5">
+                      <Loader2 className="w-8 h-8 animate-spin text-neutral-500" />
                     </div>
                   )}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -401,7 +426,7 @@ export default function Home() {
                     <div className="absolute bottom-4 right-4 flex gap-2">
                       <button
                         onClick={handleDownload}
-                        className="px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-medium hover:bg-white transition-colors shadow-lg flex items-center gap-2"
+                        className="px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-black/70 transition-colors shadow-lg flex items-center gap-2"
                       >
                         <Download className="w-4 h-4" />
                         Download
@@ -414,21 +439,21 @@ export default function Home() {
                 <div className="max-w-2xl mx-auto">
                   <button
                     onClick={() => setShowPrompt(!showPrompt)}
-                    className="text-neutral-500 hover:text-black transition-colors text-sm flex items-center gap-2"
+                    className="text-neutral-500 hover:text-white transition-colors text-sm flex items-center gap-2 mx-auto"
                   >
                     <ChevronDown className={`w-4 h-4 transition-transform ${showPrompt ? 'rotate-180' : ''}`} />
                     {showPrompt ? 'Hide' : 'View'} creative brief
                   </button>
 
                   {showPrompt && (
-                    <div className="mt-4 p-4 bg-neutral-50 rounded-xl text-sm text-neutral-700 relative">
+                    <div className="mt-4 p-6 bg-white/5 border border-white/10 rounded-xl text-sm text-neutral-300 relative">
                       <button
                         onClick={handleCopyPrompt}
-                        className="absolute top-3 right-3 text-neutral-400 hover:text-black"
+                        className="absolute top-3 right-3 text-neutral-500 hover:text-white"
                       >
                         {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                       </button>
-                      <p className="pr-8 whitespace-pre-wrap">{result.imagePrompt}</p>
+                      <p className="pr-8 whitespace-pre-wrap font-mono text-xs leading-relaxed">{result.imagePrompt}</p>
                     </div>
                   )}
                 </div>
@@ -441,7 +466,7 @@ export default function Home() {
                       setHandle('');
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="text-neutral-500 hover:text-black transition-colors text-sm"
+                    className="text-neutral-500 hover:text-white transition-colors text-sm"
                   >
                     Generate another →
                   </button>
@@ -451,9 +476,10 @@ export default function Home() {
 
             {/* Roast Section - Unique styling */}
             {roast && (
-              <div className="max-w-2xl mx-auto bg-amber-50 border-2 border-dashed border-amber-200 rounded-2xl p-6 lg:p-8">
+              <div className="max-w-2xl mx-auto bg-[#1a1a1a] border border-amber-500/20 rounded-2xl p-6 lg:p-8 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-600"></div>
                 <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2 text-amber-700 font-semibold">
+                  <div className="flex items-center gap-2 text-amber-500 font-semibold">
                     <Flame className="w-5 h-5" />
                     Therapy Session Notes
                   </div>
@@ -468,12 +494,12 @@ export default function Home() {
                         toast.error('Copy failed');
                       }
                     }}
-                    className="text-amber-600 hover:text-amber-800"
+                    className="text-neutral-500 hover:text-white"
                   >
                     {isRoastCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <div className="font-serif text-lg leading-relaxed text-amber-900 whitespace-pre-wrap">
+                <div className="font-serif text-lg leading-relaxed text-neutral-300 whitespace-pre-wrap">
                   {roast}
                 </div>
               </div>
@@ -481,8 +507,13 @@ export default function Home() {
 
             {/* FBI Profile Section - Official document styling */}
             {fbiProfile && (
-              <div className="max-w-3xl mx-auto bg-neutral-900 text-neutral-100 rounded-none p-8 lg:p-12 shadow-2xl">
-                <div className="border-b border-neutral-700 pb-4 mb-6 flex items-center justify-between">
+              <div className="max-w-3xl mx-auto bg-[#0a0a0a] border border-white/10 text-neutral-100 rounded-none p-8 lg:p-12 shadow-2xl relative">
+                <div className="absolute top-4 right-4 opacity-20">
+                  <div className="w-24 h-24 border-4 border-white rounded-full flex items-center justify-center transform -rotate-12">
+                    <span className="text-xs font-bold">TOP SECRET</span>
+                  </div>
+                </div>
+                <div className="border-b border-white/10 pb-4 mb-6 flex items-center justify-between">
                   <div>
                     <span className="text-red-500 font-bold tracking-wider">CLASSIFIED</span>
                     <span className="text-neutral-500 ml-4 text-sm">BEHAVIORAL ANALYSIS UNIT</span>
@@ -498,25 +529,25 @@ export default function Home() {
                         toast.error('Copy failed');
                       }
                     }}
-                    className="text-neutral-400 hover:text-white"
+                    className="text-neutral-500 hover:text-white"
                   >
                     {isProfileCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-neutral-300">
+                <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-neutral-400">
                   {fbiProfile}
                 </div>
               </div>
             )}
 
             {/* Minimal Footer */}
-            <footer className="text-center text-sm text-neutral-400 pt-12">
+            <footer className="text-center text-sm text-neutral-600 pt-12 pb-6">
               Built by{' '}
               <a
                 href="https://x.com/lamps_apple"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-black transition-colors"
+                className="hover:text-white transition-colors"
               >
                 @lamps_apple
               </a>

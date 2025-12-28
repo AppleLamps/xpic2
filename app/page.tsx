@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { PromptHistorySidebar } from '@/components/PromptHistorySidebar';
@@ -302,7 +301,7 @@ export default function Home() {
               {/* Right: Input Form */}
               <div className="bg-white rounded-2xl border border-black/10 p-6 lg:p-8 shadow-2xl shadow-black/5">
                 <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-3">
+                  <div className="flex flex-col gap-3">
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-medium">@</span>
                       <input
@@ -320,28 +319,30 @@ export default function Home() {
                         spellCheck={false}
                       />
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          disabled={isBusy}
-                          className="px-6 py-4 bg-black text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          Generate
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={handleGenerate} disabled={isBusy}>
-                          Create artwork
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleRoast} disabled={isBusy}>
-                          Roast letter
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleFbiProfile} disabled={isBusy}>
-                          FBI profile
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={handleGenerate}
+                        disabled={isBusy}
+                        className="px-4 py-3 bg-black text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 text-sm"
+                      >
+                        Artwork
+                      </button>
+                      <button
+                        onClick={handleRoast}
+                        disabled={isBusy}
+                        className="px-4 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-1.5"
+                      >
+                        <Flame className="w-4 h-4" />
+                        Roast
+                      </button>
+                      <button
+                        onClick={handleFbiProfile}
+                        disabled={isBusy}
+                        className="px-4 py-3 bg-neutral-700 text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors disabled:opacity-50 text-sm"
+                      >
+                        FBI Profile
+                      </button>
+                    </div>
                   </div>
 
                   {inputError && (

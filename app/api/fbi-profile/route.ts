@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// CORS headers for cross-origin requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
+import { GrokResponseSchema, extractGrokContent, getCorsHeaders } from '@/lib/schemas';
 
 // FBI Behavioral Analysis Unit – Digital Profiler
 const systemPrompt = `You are Special Agent Dr. [REDACTED], a senior criminal profiler from the FBI's Behavioral Analysis Unit (BAU) with 25 years of experience analyzing digital footprints. You specialize in constructing comprehensive psychological profiles from social media behavior patterns. Your task is to write a professional FBI-style behavioral profile report for the X user (@handle).
@@ -87,10 +83,12 @@ Behavioral Analysis Unit
 Keep the report 500-700 words. Be specific, use actual post references where possible, and maintain the professional FBI tone throughout while delivering genuinely insightful psychological observations that will make the reader feel "seen."`;
 
 export async function OPTIONS() {
-  return NextResponse.json(null, { headers: corsHeaders });
+  return NextResponse.json(null, { headers: getCorsHeaders() });
 }
 
 export async function POST(req: NextRequest) {
+  const corsHeaders = getCorsHeaders();
+
   try {
     const { handle } = await req.json();
 
@@ -115,33 +113,38 @@ export async function POST(req: NextRequest) {
     // Build date range for search (last ~6 months)
     const today = new Date();
     const toDate = today.toISOString().split('T')[0];
-    const sixMonthsAgo = new Date(today.getTime() - 182 * 24 * 60 * 60 * 1000);
+    const DAYS_IN_6_MONTHS = 182;
+    const sixMonthsAgo = new Date(today.getTime() - DAYS_IN_6_MONTHS * 24 * 60 * 60 * 1000);
     const fromDate = sixMonthsAgo.toISOString().split('T')[0];
 
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${xaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-        model: 'grok-4-1-fast',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Conduct a deep behavioral analysis of @${handle}'s X activity and generate the FBI profile report as described. Today's date is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
-          },
-        ],
-        search_parameters: {
-          mode: 'on',
-          sources: [{ type: 'x' }],
-          from_date: fromDate,
-          to_date: toDate,
+    const response = await fetchWithTimeout(
+      'https://api.x.ai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${xaiApiKey}`,
+          'Content-Type': 'application/json',
         },
-      }),
-    });
+        body: JSON.stringify({
+          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
+          model: 'grok-4-1-fast',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Conduct a deep behavioral analysis of @${handle}'s X activity and generate the FBI profile report as described. Today's date is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
+            },
+          ],
+          search_parameters: {
+            mode: 'on',
+            sources: [{ type: 'x' }],
+            from_date: fromDate,
+            to_date: toDate,
+          },
+        }),
+      },
+      API_TIMEOUTS.GROK_ANALYSIS
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -152,8 +155,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = await response.json();
-    const profileReport = data.choices?.[0]?.message?.content;
+    const rawData = await response.json();
+    const validationResult = GrokResponseSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      console.error('Invalid Grok API response structure:', validationResult.error);
+      return NextResponse.json(
+        { error: 'Invalid response from Grok API' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    const profileReport = extractGrokContent(validationResult.data);
 
     if (!profileReport) {
       return NextResponse.json(
@@ -167,7 +180,7 @@ export async function POST(req: NextRequest) {
     console.error('Error in fbi-profile function:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders() }
     );
   }
 }

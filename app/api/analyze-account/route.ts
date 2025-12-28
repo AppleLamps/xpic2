@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, xAccountCache } from '@/db';
 import { eq, gt, and } from 'drizzle-orm';
+import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
+import { GrokResponseSchema, extractGrokContent, getCorsHeaders } from '@/lib/schemas';
 
 // Feature flag: Set to true to enable caching
-const ENABLE_CACHING = false;
-
-// CORS headers for cross-origin requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ENABLE_CACHING = process.env.ENABLE_CACHING === 'true';
 
 export async function OPTIONS() {
-  return NextResponse.json(null, { headers: corsHeaders });
+  return NextResponse.json(null, { headers: getCorsHeaders() });
 }
 
 export async function POST(req: NextRequest) {
+  const corsHeaders = getCorsHeaders();
+
   try {
     const { handle, useSafetyGuidelines } = await req.json();
 
@@ -101,7 +99,8 @@ Content Guidelines:
     // Build date range for search (6 months)
     const today = new Date();
     const toDate = today.toISOString().split('T')[0];
-    const sixMonthsAgo = new Date(today.getTime() - 182 * 24 * 60 * 60 * 1000);
+    const DAYS_IN_6_MONTHS = 182;
+    const sixMonthsAgo = new Date(today.getTime() - DAYS_IN_6_MONTHS * 24 * 60 * 60 * 1000);
     const fromDate = sixMonthsAgo.toISOString().split('T')[0];
 
     // Use cached data if available and caching is enabled
@@ -110,25 +109,29 @@ Content Guidelines:
 
       const cachedContext = JSON.stringify(cachedData.searchResponse);
 
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${xaiApiKey}`,
-          'Content-Type': 'application/json',
+      const response = await fetchWithTimeout(
+        'https://api.x.ai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${xaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
+            model: 'grok-4-1-fast',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              {
+                role: 'user',
+                content: `Based on this X account data: ${cachedContext}\n\nCreate a humorous but relevant image generation prompt that captures the account's essence.`,
+              },
+            ],
+            // No tools - we're using cached data
+          }),
         },
-        body: JSON.stringify({
-          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-          model: 'grok-4-1-fast',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            {
-              role: 'user',
-              content: `Based on this X account data: ${cachedContext}\n\nCreate a humorous but relevant image generation prompt that captures the account's essence.`,
-            },
-          ],
-          // No tools - we're using cached data
-        }),
-      });
+        API_TIMEOUTS.GROK_ANALYSIS
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -139,36 +142,50 @@ Content Guidelines:
         );
       }
 
-      const data = await response.json();
-      imagePrompt = data.choices?.[0]?.message?.content;
+      const rawData = await response.json();
+      const validationResult = GrokResponseSchema.safeParse(rawData);
+
+      if (!validationResult.success) {
+        console.error('Invalid Grok API response structure:', validationResult.error);
+        return NextResponse.json(
+          { error: 'Invalid response from Grok API' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      imagePrompt = extractGrokContent(validationResult.data);
     } else {
       // Perform agentic search with tools
       console.log(`Performing agentic search for @${handle}${ENABLE_CACHING ? ' (cache miss)' : ' (caching disabled)'}`);
 
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${xaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-          model: 'grok-4-1-fast',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            {
-              role: 'user',
-              content: `Analyze @${handle}'s posts and create a humorous but relevant image generation prompt that captures their account's essence.`,
-            },
-          ],
-          search_parameters: {
-            mode: 'on',
-            sources: [{ type: 'x' }],
-            from_date: fromDate,
-            to_date: toDate,
+      const response = await fetchWithTimeout(
+        'https://api.x.ai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${xaiApiKey}`,
+            'Content-Type': 'application/json',
           },
-        }),
-      });
+          body: JSON.stringify({
+            // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
+            model: 'grok-4-1-fast',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              {
+                role: 'user',
+                content: `Analyze @${handle}'s posts and create a humorous but relevant image generation prompt that captures their account's essence.`,
+              },
+            ],
+            search_parameters: {
+              mode: 'on',
+              sources: [{ type: 'x' }],
+              from_date: fromDate,
+              to_date: toDate,
+            },
+          }),
+        },
+        API_TIMEOUTS.GROK_ANALYSIS
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -179,8 +196,18 @@ Content Guidelines:
         );
       }
 
-      const data = await response.json();
-      imagePrompt = data.choices?.[0]?.message?.content;
+      const rawData = await response.json();
+      const validationResult = GrokResponseSchema.safeParse(rawData);
+
+      if (!validationResult.success) {
+        console.error('Invalid Grok API response structure:', validationResult.error);
+        return NextResponse.json(
+          { error: 'Invalid response from Grok API' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      imagePrompt = extractGrokContent(validationResult.data);
 
       // Cache the response if caching is enabled
       if (ENABLE_CACHING) {
@@ -190,13 +217,13 @@ Content Guidelines:
             .insert(xAccountCache)
             .values({
               xHandle: handle.toLowerCase(),
-              searchResponse: data,
+              searchResponse: rawData,
               expiresAt,
             })
             .onConflictDoUpdate({
               target: xAccountCache.xHandle,
               set: {
-                searchResponse: data,
+                searchResponse: rawData,
                 expiresAt,
               },
             });
@@ -223,7 +250,7 @@ Content Guidelines:
     console.error('Error in analyze-account function:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders() }
     );
   }
 }

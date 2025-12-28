@@ -340,10 +340,10 @@ export default function Home() {
         <div className="fixed top-4 left-4 z-50">
           <SidebarTrigger
             aria-label="Open prompt history"
-            className="p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl border border-slate-300/50 bg-white/90"
+            className="p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl border border-black/10 bg-white"
             style={{ backdropFilter: 'blur(4px)' }}
           >
-            <Sparkles className="h-5 w-5 text-slate-700" />
+            <Sparkles className="h-5 w-5 text-black" />
             <span className="sr-only">Open prompt history</span>
           </SidebarTrigger>
         </div>
@@ -355,8 +355,8 @@ export default function Home() {
                 Beta - AI-generated profile art
               </Badge>
               <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-5">
-                <div className="flex items-center justify-center w-[68px] h-[68px] md:w-20 md:h-20 rounded-3xl bg-gradient-to-br from-slate-200/60 via-slate-100/50 to-slate-200/60 backdrop-blur-xl border border-slate-300/50 shadow-2xl">
-                  <Zap className="w-8 h-8 md:w-10 md:h-10 text-slate-700 drop-shadow-sm" />
+                <div className="flex items-center justify-center w-[68px] h-[68px] md:w-20 md:h-20 rounded-3xl bg-gradient-to-br from-neutral-100 via-white to-neutral-100 backdrop-blur-xl border border-black/10 shadow-2xl">
+                  <Zap className="w-8 h-8 md:w-10 md:h-10 text-black drop-shadow-sm" />
                 </div>
                 <h1 className="text-[2.4rem] md:text-[3.3rem] leading-tight font-serif font-black tracking-tight title-glow">
                   X-pressionist
@@ -453,7 +453,7 @@ export default function Home() {
                         <Button
                           disabled={isBusy}
                           size="lg"
-                          className="btn-press bg-gradient-to-r from-slate-700 to-slate-600 text-white font-semibold hover:from-slate-600 hover:to-slate-500 hover:scale-[1.02] hover:shadow-xl transition-all duration-300 shadow-lg w-full sm:w-auto sm:min-w-[180px]"
+                          className="btn-press bg-gradient-to-r from-black to-neutral-800 text-white font-semibold hover:from-neutral-800 hover:to-neutral-700 hover:scale-[1.02] hover:shadow-xl transition-all duration-300 shadow-lg w-full sm:w-auto sm:min-w-[180px]"
                         >
                           {isLoading ? (
                             <>
@@ -555,7 +555,7 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="space-y-3.5">
                   {/* Progress bar */}
-                  <div className="h-1.5 w-full bg-slate-200/60 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
                     <div className="h-full w-1/4 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-progress" />
                   </div>
                   {PROGRESS_STEPS.map(({ id, title, description, icon: Icon }) => {
@@ -659,10 +659,10 @@ export default function Home() {
                   <div className="space-y-4">
                     <div className="flex justify-center p-3 border border-white/20 rounded-lg bg-black/10 result-image-container">
                       {isImageLoading && (
-                        <div className="w-full aspect-square max-w-md rounded-md bg-slate-200/60 image-loading flex items-center justify-center">
+                        <div className="w-full aspect-square max-w-md rounded-md bg-neutral-100 image-loading flex items-center justify-center">
                           <div className="text-center space-y-3">
-                            <Loader2 className="h-8 w-8 text-slate-400 animate-spin mx-auto" />
-                            <p className="text-sm text-slate-500">Loading image...</p>
+                            <Loader2 className="h-8 w-8 text-neutral-400 animate-spin mx-auto" />
+                            <p className="text-sm text-neutral-500">Loading image...</p>
                           </div>
                         </div>
                       )}
@@ -683,7 +683,7 @@ export default function Home() {
                       <Button
                         onClick={handleDownload}
                         size="lg"
-                        className="btn-press bg-gradient-to-r from-slate-700 to-slate-600 text-white font-semibold hover:from-slate-600 hover:to-slate-500 hover:scale-[1.02] hover:shadow-xl transition-all duration-300 shadow-lg"
+                        className="btn-press bg-gradient-to-r from-black to-neutral-800 text-white font-semibold hover:from-neutral-800 hover:to-neutral-700 hover:scale-[1.02] hover:shadow-xl transition-all duration-300 shadow-lg"
                       >
                         <Download className="w-5 h-5 mr-2" />
                         Download image
@@ -751,11 +751,11 @@ export default function Home() {
             )}
 
             {fbiProfile && (
-              <Card className="glass-card shadow-2xl animate-fade-in w-full border-slate-400/50">
-                <CardHeader className="bg-slate-100/50 rounded-t-xl">
+              <Card className="glass-card shadow-2xl animate-fade-in w-full border-black/20">
+                <CardHeader className="bg-neutral-100/80 rounded-t-xl">
                   <div className="flex flex-col gap-2">
                     <CardTitle className="flex items-center gap-2 text-foreground font-mono">
-                      <FileText className="w-5 h-5 text-slate-700" />
+                      <FileText className="w-5 h-5 text-black" />
                       FBI Behavioral Analysis Report
                     </CardTitle>
                     <CardDescription className="font-mono text-xs">
@@ -795,7 +795,7 @@ export default function Home() {
                       )}
                     </Button>
                   </div>
-                  <div className="rounded-xl border border-slate-300/60 bg-slate-50/80 p-5 text-sm leading-relaxed text-foreground whitespace-pre-wrap font-mono">
+                  <div className="rounded-xl border border-black/10 bg-neutral-50 p-5 text-sm leading-relaxed text-foreground whitespace-pre-wrap font-mono">
                     {fbiProfile}
                   </div>
                 </CardContent>

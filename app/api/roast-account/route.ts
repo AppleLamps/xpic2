@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// CORS headers for cross-origin requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
+import { GrokResponseSchema, extractGrokContent, getCorsHeaders } from '@/lib/schemas';
 
 // Comedy Central Roast Bot: Therapist Edition – Flexible Flow
 const systemPrompt = `You are Dr. Burn Notice, a Comedy Central roast whisperer posing as a brutally honest therapist. Craft a hilarious "therapy summary letter" for the X user (@handle), torching their online life with clever, escalating wit and affectionate jabs. Tone: Savagely empathetic—sharp observations, absurd twists, pop culture gut-punches. Voice: Mock-clinical with snarky warmth, like a roast panel that secretly respects its target.
@@ -34,10 +30,12 @@ Structure (Adapt as Needed):
 Output ONLY the letter. No preamble, no disclaimers, no explanations.`;
 
 export async function OPTIONS() {
-  return NextResponse.json(null, { headers: corsHeaders });
+  return NextResponse.json(null, { headers: getCorsHeaders() });
 }
 
 export async function POST(req: NextRequest) {
+  const corsHeaders = getCorsHeaders();
+
   try {
     const { handle } = await req.json();
 
@@ -62,33 +60,38 @@ export async function POST(req: NextRequest) {
     // Build date range for search (last ~6 months)
     const today = new Date();
     const toDate = today.toISOString().split('T')[0];
-    const sixMonthsAgo = new Date(today.getTime() - 182 * 24 * 60 * 60 * 1000);
+    const DAYS_IN_6_MONTHS = 182;
+    const sixMonthsAgo = new Date(today.getTime() - DAYS_IN_6_MONTHS * 24 * 60 * 60 * 1000);
     const fromDate = sixMonthsAgo.toISOString().split('T')[0];
 
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${xaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
-        model: 'grok-4-1-fast',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          {
-            role: 'user',
-            content: `Analyze @${handle}'s posts and write the roast letter as described.`,
-          },
-        ],
-        search_parameters: {
-          mode: 'on',
-          sources: [{ type: 'x' }],
-          from_date: fromDate,
-          to_date: toDate,
+    const response = await fetchWithTimeout(
+      'https://api.x.ai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${xaiApiKey}`,
+          'Content-Type': 'application/json',
         },
-      }),
-    });
+        body: JSON.stringify({
+          // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
+          model: 'grok-4-1-fast',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            {
+              role: 'user',
+              content: `Analyze @${handle}'s posts and write the roast letter as described.`,
+            },
+          ],
+          search_parameters: {
+            mode: 'on',
+            sources: [{ type: 'x' }],
+            from_date: fromDate,
+            to_date: toDate,
+          },
+        }),
+      },
+      API_TIMEOUTS.GROK_ANALYSIS
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -99,8 +102,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const data = await response.json();
-    const roastLetter = data.choices?.[0]?.message?.content;
+    const rawData = await response.json();
+    const validationResult = GrokResponseSchema.safeParse(rawData);
+
+    if (!validationResult.success) {
+      console.error('Invalid Grok API response structure:', validationResult.error);
+      return NextResponse.json(
+        { error: 'Invalid response from Grok API' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    const roastLetter = extractGrokContent(validationResult.data);
 
     if (!roastLetter) {
       return NextResponse.json(
@@ -114,7 +127,7 @@ export async function POST(req: NextRequest) {
     console.error('Error in roast-account function:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders() }
     );
   }
 }

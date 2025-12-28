@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, usageTracking } from '@/db';
 import { eq } from 'drizzle-orm';
-
-// CORS headers for cross-origin requests
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
+import {
+  GeminiImageResponseSchema,
+  GetImgResponseSchema,
+  extractGeminiImage,
+  extractGetImgUrl,
+  getCorsHeaders,
+} from '@/lib/schemas';
 
 // Premium image model (easy to change back if needed)
 // Supported Google models: "google/gemini-2.5-flash-image", "google/gemini-3-pro-image-preview"
@@ -27,9 +29,10 @@ const getUserIdentifier = async (req: NextRequest): Promise<string> => {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || req.headers.get('x-real-ip') || 'unknown';
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
-  // Create hash to anonymize
+  // Create hash to anonymize (add server salt for security)
+  const salt = process.env.RATE_LIMIT_SALT || 'default-salt';
   const encoder = new TextEncoder();
-  const data = encoder.encode(ip + userAgent);
+  const data = encoder.encode(ip + userAgent + salt);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -46,7 +49,8 @@ const checkUsageAndGetModel = async (identifier: string) => {
 
   let usage = existingUsage[0] || null;
   const now = new Date();
-  const resetNeeded = !usage || now.getTime() - new Date(usage.lastResetAt!).getTime() > 24 * 60 * 60 * 1000;
+  const HOURS_24_MS = 24 * 60 * 60 * 1000;
+  const resetNeeded = !usage || now.getTime() - new Date(usage.lastResetAt!).getTime() > HOURS_24_MS;
 
   if (!usage) {
     // Create new record
@@ -75,9 +79,11 @@ const checkUsageAndGetModel = async (identifier: string) => {
 
   const usePremium = (usage?.premiumImagesCount || 0) < 2;
 
-  console.log(
-    `User identifier: ${identifier.substring(0, 8)}... | Premium count: ${usage?.premiumImagesCount || 0}/2 | Using: ${usePremium ? 'Nano Banana (premium)' : 'Flux (standard)'}`
-  );
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(
+      `User identifier: ${identifier.substring(0, 8)}... | Premium count: ${usage?.premiumImagesCount || 0}/2 | Using: ${usePremium ? 'Nano Banana (premium)' : 'Flux (standard)'}`
+    );
+  }
 
   return { usePremium, usage };
 };
@@ -91,22 +97,26 @@ const generateWithFlux = async (prompt: string): Promise<string> => {
 
   console.log('Using Flux Schnell model (GetImg.ai)');
 
-  const response = await fetch('https://api.getimg.ai/v1/flux-schnell/text-to-image', {
-    method: 'POST',
-    headers: {
-      accept: 'application/json',
-      authorization: `Bearer ${getimgApiKey}`,
-      'content-type': 'application/json',
+  const response = await fetchWithTimeout(
+    'https://api.getimg.ai/v1/flux-schnell/text-to-image',
+    {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        authorization: `Bearer ${getimgApiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        width: 1024,
+        height: 1024,
+        steps: 4,
+        output_format: 'jpeg',
+        response_format: 'url',
+      }),
     },
-    body: JSON.stringify({
-      prompt: prompt,
-      width: 1024,
-      height: 1024,
-      steps: 4,
-      output_format: 'jpeg',
-      response_format: 'url',
-    }),
-  });
+    API_TIMEOUTS.FLUX_GENERATION
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -114,14 +124,18 @@ const generateWithFlux = async (prompt: string): Promise<string> => {
     throw new Error(`GetImg.ai API error: ${response.status}`);
   }
 
-  const data = await response.json();
-  console.log('GetImg.ai response:', JSON.stringify(data));
+  const rawData = await response.json();
+  const validationResult = GetImgResponseSchema.safeParse(rawData);
 
-  // GetImg.ai returns base64 image in the "image" field
-  const imageUrl = data.image || data.url || data.data?.[0]?.url;
+  if (!validationResult.success) {
+    console.error('Invalid GetImg.ai response structure:', validationResult.error);
+    throw new Error('Invalid response from GetImg.ai API');
+  }
+
+  const imageUrl = extractGetImgUrl(validationResult.data);
 
   if (!imageUrl) {
-    console.error('No image in GetImg.ai response. Full data:', data);
+    console.error('No image in GetImg.ai response');
     throw new Error('GetImg.ai did not return an image');
   }
 
@@ -130,10 +144,12 @@ const generateWithFlux = async (prompt: string): Promise<string> => {
 };
 
 export async function OPTIONS() {
-  return NextResponse.json(null, { headers: corsHeaders });
+  return NextResponse.json(null, { headers: getCorsHeaders() });
 }
 
 export async function POST(req: NextRequest) {
+  const corsHeaders = getCorsHeaders();
+
   try {
     const { prompt, handle } = await req.json();
 
@@ -184,27 +200,33 @@ export async function POST(req: NextRequest) {
           ? enhancePromptForGoogleModels(currentPrompt)
           : currentPrompt;
 
-        console.log(`Using ${isGoogleModel(PREMIUM_IMAGE_MODEL) ? 'enhanced' : 'standard'} prompt:`, finalPrompt);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`Using ${isGoogleModel(PREMIUM_IMAGE_MODEL) ? 'enhanced' : 'standard'} prompt:`, finalPrompt);
+        }
 
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${openrouterApiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://x-image-generator.vercel.app',
-            'X-Title': 'X Account Image Generator',
+        const response = await fetchWithTimeout(
+          'https://openrouter.ai/api/v1/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${openrouterApiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://x-image-generator.vercel.app',
+              'X-Title': 'X Account Image Generator',
+            },
+            body: JSON.stringify({
+              model: PREMIUM_IMAGE_MODEL,
+              messages: [
+                {
+                  role: 'user',
+                  content: finalPrompt,
+                },
+              ],
+              modalities: ['image', 'text'],
+            }),
           },
-          body: JSON.stringify({
-            model: PREMIUM_IMAGE_MODEL,
-            messages: [
-              {
-                role: 'user',
-                content: finalPrompt,
-              },
-            ],
-            modalities: ['image', 'text'],
-          }),
-        });
+          API_TIMEOUTS.IMAGE_GENERATION
+        );
 
         if (!response.ok) {
           const errorText = await response.text();
@@ -212,12 +234,18 @@ export async function POST(req: NextRequest) {
           throw new Error(`OpenRouter API error: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log('OpenRouter response:', JSON.stringify(data, null, 2));
+        const rawData = await response.json();
+        const validationResult = GeminiImageResponseSchema.safeParse(rawData);
+
+        if (!validationResult.success) {
+          console.error('Invalid Gemini API response structure:', validationResult.error);
+          throw new Error('Invalid response from Gemini API');
+        }
+
+        const imageResult = extractGeminiImage(validationResult.data);
 
         // Check for safety block
-        const finishReason = data.choices?.[0]?.native_finish_reason;
-        if (finishReason === 'IMAGE_SAFETY') {
+        if (imageResult && 'safetyBlocked' in imageResult) {
           if (isRetry) {
             console.error('Image blocked by safety even after regenerating with guidelines');
             throw new Error('Content cannot be safely generated - blocked by safety filters');
@@ -227,16 +255,20 @@ export async function POST(req: NextRequest) {
 
           // Call analyze-account again with safety guidelines enabled
           const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-          const analyzeResponse = await fetch(`${baseUrl}/api/analyze-account`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          const analyzeResponse = await fetchWithTimeout(
+            `${baseUrl}/api/analyze-account`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                handle: handle,
+                useSafetyGuidelines: true,
+              }),
             },
-            body: JSON.stringify({
-              handle: handle,
-              useSafetyGuidelines: true,
-            }),
-          });
+            API_TIMEOUTS.GROK_ANALYSIS
+          );
 
           if (!analyzeResponse.ok) {
             console.error('Failed to regenerate prompt');
@@ -250,14 +282,13 @@ export async function POST(req: NextRequest) {
           return attemptImageGeneration(safePrompt, true);
         }
 
-        const generatedImageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        if (!generatedImageUrl) {
-          console.error('No image URL in response:', data);
+        if (!imageResult || !('url' in imageResult)) {
+          console.error('No image URL in validated response');
           throw new Error('Failed to generate image - no image URL in response');
         }
 
         console.log('Premium image generated successfully');
-        return generatedImageUrl;
+        return imageResult.url;
       };
 
       // Generate premium image
@@ -284,7 +315,7 @@ export async function POST(req: NextRequest) {
     console.error('Error in generate-image function:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders() }
     );
   }
 }

@@ -1,92 +1,27 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   Loader2,
-  Image as ImageIcon,
-  AlertCircle,
-  Sparkles,
   Download,
+  Copy,
+  Check,
+  ChevronDown,
+  Flame,
+  History,
   Heart,
   Coffee,
   DollarSign,
-  Palette,
-  Copy,
-  Check,
-  Zap,
-  Wand2,
-  ListChecks,
-  Search,
-  Sparkle,
-  ExternalLink,
-  ChevronDown,
-  FileText,
-  History,
-  Share2,
-  Flame,
-  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { PromptHistorySidebar } from '@/components/PromptHistorySidebar';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 
-// Static data moved outside component to prevent recreation on every render
-const DONORS = ['F0XYOU', 'RazorRuckus'];
 const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'ai__memes'];
-const STAGE_ORDER: Array<'analyze' | 'image'> = ['analyze', 'image'];
-
-const PROGRESS_STEPS: Array<{
-  id: 'analyze' | 'image';
-  title: string;
-  description: string;
-  icon: LucideIcon;
-}> = [
-  {
-    id: 'analyze',
-    title: 'Understand the vibe',
-    description: 'Grok inspects recent posts and highlights the dominant tone.',
-    icon: Search,
-  },
-  {
-    id: 'image',
-    title: 'Paint the artwork',
-    description: 'Gemini turns the brief into a bespoke visual composition.',
-    icon: Wand2,
-  },
-];
-
-const HOW_IT_WORKS: Array<{
-  title: string;
-  description: string;
-  icon: LucideIcon;
-}> = [
-  {
-    title: 'Share an X handle',
-    description: "We only need the username-no authentication or passwords required.",
-    icon: Sparkles,
-  },
-  {
-    title: 'We study the signal',
-    description: 'Grok reads the timeline to learn the personality, pace, and topics you care about.',
-    icon: ListChecks,
-  },
-  {
-    title: 'Receive a tailored artwork',
-    description: 'Gemini renders a polished illustration inspired by your online voice.',
-    icon: Palette,
-  },
-];
 
 export default function Home() {
   const [handle, setHandle] = useState('');
@@ -103,48 +38,16 @@ export default function Home() {
   const [isCopied, setIsCopied] = useState(false);
   const [isRoastCopied, setIsRoastCopied] = useState(false);
   const [isProfileCopied, setIsProfileCopied] = useState(false);
-  const [currentDonorIndex, setCurrentDonorIndex] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const { history, addToHistory, deleteFromHistory, clearHistory } = usePromptHistory();
-
-  // Donor rotation effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentDonorIndex((prevIndex) => (prevIndex + 1) % DONORS.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Pause animations when tab is not visible to save CPU
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      const root = document.documentElement;
-      if (document.hidden) {
-        root.style.setProperty('animation-play-state', 'paused');
-      } else {
-        root.style.setProperty('animation-play-state', 'running');
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  const focusInput = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    requestAnimationFrame(() => {
-      const element = document.getElementById('handle-input');
-      element?.focus();
-    });
-  };
 
   const handleGenerate = async () => {
     const normalizedHandle = handle.trim().replace('@', '');
 
     if (!normalizedHandle) {
-      setInputError('Enter an X username to get started.');
+      setInputError('Enter a username');
       return;
     }
 
@@ -153,10 +56,10 @@ export default function Home() {
     setGlobalError('');
     setResult(null);
     setRoast(null);
+    setFbiProfile(null);
     setLoadingStage('analyze');
 
     try {
-      toast.info('Analyzing X account...');
       const analysisResponse = await fetch('/api/analyze-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -168,7 +71,6 @@ export default function Home() {
       if (!analysisData?.imagePrompt) throw new Error('Failed to generate image prompt');
 
       setLoadingStage('image');
-      toast.info('Generating image...');
       const imageResponse = await fetch('/api/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -195,16 +97,12 @@ export default function Home() {
         imageUrl: imageData.imageUrl,
       });
 
-      toast.success('Image generated successfully!');
-
-      setTimeout(() => {
-        document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      toast.success('Artwork generated!');
     } catch (err: unknown) {
       console.error('Generation error:', err);
-      const message = err instanceof Error ? err.message : 'Failed to generate image. Please try again.';
+      const message = err instanceof Error ? err.message : 'Something went wrong';
       setGlobalError(message);
-      toast.error('Failed to generate image');
+      toast.error(message);
     } finally {
       setLoadingStage(null);
       setIsLoading(false);
@@ -220,15 +118,14 @@ export default function Home() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `x-account-${result.username}-generated.png`;
+      link.download = `xpressionist-${result.username}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      toast.success('Image downloaded!');
-    } catch (error: unknown) {
-      console.error('Download error:', error);
-      toast.error('Failed to download image');
+      toast.success('Downloaded!');
+    } catch {
+      toast.error('Download failed');
     }
   };
 
@@ -236,7 +133,7 @@ export default function Home() {
     const normalizedHandle = handle.trim().replace('@', '');
 
     if (!normalizedHandle) {
-      setInputError('Enter an X username to get started.');
+      setInputError('Enter a username');
       return;
     }
 
@@ -246,7 +143,6 @@ export default function Home() {
     setRoast(null);
 
     try {
-      toast.info('Analyzing for roast...');
       const response = await fetch('/api/roast-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,12 +154,12 @@ export default function Home() {
       if (!data?.roastLetter) throw new Error('Failed to generate roast letter');
 
       setRoast(data.roastLetter);
-      toast.success('Roast letter ready!');
+      toast.success('Roast ready!');
     } catch (err: unknown) {
       console.error('Roast error:', err);
-      const message = err instanceof Error ? err.message : 'Failed to generate roast. Please try again.';
+      const message = err instanceof Error ? err.message : 'Something went wrong';
       setGlobalError(message);
-      toast.error('Failed to generate roast');
+      toast.error(message);
     } finally {
       setIsRoasting(false);
     }
@@ -273,7 +169,7 @@ export default function Home() {
     const normalizedHandle = handle.trim().replace('@', '');
 
     if (!normalizedHandle) {
-      setInputError('Enter an X username to get started.');
+      setInputError('Enter a username');
       return;
     }
 
@@ -283,7 +179,6 @@ export default function Home() {
     setFbiProfile(null);
 
     try {
-      toast.info('Conducting behavioral analysis...');
       const response = await fetch('/api/fbi-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -291,16 +186,16 @@ export default function Home() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to generate FBI profile');
-      if (!data?.profileReport) throw new Error('Failed to generate FBI profile');
+      if (!response.ok) throw new Error(data.error || 'Failed to generate profile');
+      if (!data?.profileReport) throw new Error('Failed to generate profile');
 
       setFbiProfile(data.profileReport);
-      toast.success('FBI behavioral profile ready!');
+      toast.success('Profile ready!');
     } catch (err: unknown) {
-      console.error('FBI profile error:', err);
-      const message = err instanceof Error ? err.message : 'Failed to generate FBI profile. Please try again.';
+      console.error('Profile error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
       setGlobalError(message);
-      toast.error('Failed to generate FBI profile');
+      toast.error(message);
     } finally {
       setIsProfiling(false);
     }
@@ -308,25 +203,14 @@ export default function Home() {
 
   const handleCopyPrompt = async () => {
     if (!result?.imagePrompt) return;
-
     try {
       await navigator.clipboard.writeText(result.imagePrompt);
       setIsCopied(true);
-      toast.success('Prompt copied to clipboard!');
-
-      setTimeout(() => {
-        setIsCopied(false);
-      }, 2000);
-    } catch (error: unknown) {
-      console.error('Copy error:', error);
-      toast.error('Failed to copy prompt');
+      toast.success('Copied!');
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      toast.error('Copy failed');
     }
-  };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    setHandle(suggestion);
-    setInputError('');
-    focusInput();
   };
 
   const isBusy = isLoading || isRoasting || isProfiling;
@@ -334,68 +218,78 @@ export default function Home() {
   return (
     <SidebarProvider defaultOpen={false}>
       <PromptHistorySidebar history={history} onDelete={deleteFromHistory} onClearAll={clearHistory} />
-      <div className="relative min-h-screen w-full overflow-hidden flex-1">
+
+      <div className="relative min-h-screen w-full flex-1">
+        {/* Subtle background */}
         <div className="aurora-background fixed inset-0" />
 
-        <div className="fixed top-4 left-4 z-50">
-          <SidebarTrigger
-            aria-label="Open prompt history"
-            className="p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl border border-black/10 bg-white"
-            style={{ backdropFilter: 'blur(4px)' }}
-          >
-            <Sparkles className="h-5 w-5 text-black" />
-            <span className="sr-only">Open prompt history</span>
+        {/* History trigger */}
+        <div className="fixed top-6 left-6 z-50">
+          <SidebarTrigger className="p-3 bg-white rounded-xl border border-black/10 shadow-lg hover:shadow-xl transition-shadow">
+            <History className="h-5 w-5 text-black" />
           </SidebarTrigger>
         </div>
 
-        <main className="relative z-10 flex flex-col items-center min-h-screen px-4 sm:px-6 lg:px-8 pt-12 pb-10">
-          <div className="max-w-4xl w-full mx-auto space-y-12 md:space-y-14">
-            <div className="text-center space-y-5 md:space-y-6 animate-fade-in">
-              <Badge variant="secondary" className="uppercase tracking-wide text-xs px-3 py-1 rounded-full">
-                Beta - AI-generated profile art
-              </Badge>
-              <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-5">
-                <div className="flex items-center justify-center w-[68px] h-[68px] md:w-20 md:h-20 rounded-3xl bg-gradient-to-br from-neutral-100 via-white to-neutral-100 backdrop-blur-xl border border-black/10 shadow-2xl">
-                  <Zap className="w-8 h-8 md:w-10 md:h-10 text-black drop-shadow-sm" />
-                </div>
-                <h1 className="text-[2.4rem] md:text-[3.3rem] leading-tight font-serif font-black tracking-tight title-glow">
+        {/* Full-page loading overlay */}
+        {(isLoading || isRoasting || isProfiling) && (
+          <div className="fixed inset-0 bg-white/95 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="text-center space-y-6">
+              <div className="w-16 h-16 border-4 border-black border-t-transparent rounded-full animate-spin mx-auto" />
+              <div>
+                <p className="text-2xl font-semibold text-black">
+                  {isLoading && loadingStage === 'analyze' && 'Reading the vibes...'}
+                  {isLoading && loadingStage === 'image' && 'Painting your portrait...'}
+                  {isRoasting && 'Crafting your roast...'}
+                  {isProfiling && 'Analyzing behavior patterns...'}
+                </p>
+                <p className="text-neutral-500 mt-2">This takes about 10 seconds</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <main className="relative z-10 min-h-screen px-6 lg:px-12 py-16 lg:py-24">
+          <div className="max-w-6xl mx-auto space-y-24">
+
+            {/* Hero Section - Asymmetrical */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center min-h-[60vh]">
+              {/* Left: Title & Description */}
+              <div className="space-y-6">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-black leading-none">
                   X-pressionist
                 </h1>
-              </div>
-              <p className="text-base md:text-lg text-foreground/70 max-w-2xl mx-auto">
-                Transform any public X timeline into a bespoke AI artwork-perfect for profile revamps, launch campaigns, or gifting friends
-                a fresh visual identity.
-              </p>
+                <p className="text-xl text-neutral-600 max-w-md leading-relaxed">
+                  Turn any X timeline into bespoke AI artwork.<br />
+                  No login. No API keys. Just a username.
+                </p>
 
-              <div className="flex items-center justify-center gap-2.5 md:gap-3 pt-1">
+                {/* Support link */}
                 <Dialog open={donateOpen} onOpenChange={setDonateOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="secondary" className="btn-press rounded-full px-5 h-10">
-                      <Heart className="w-4 h-4 mr-2" />
-                      Support API Costs
-                    </Button>
+                    <button className="text-sm text-neutral-400 hover:text-black transition-colors flex items-center gap-1">
+                      <Heart className="w-4 h-4" />
+                      Support this project
+                    </button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 text-2xl text-foreground">
-                        <Heart className="w-6 h-6 text-rose-500 fill-current" />
-                        Support This Project
+                      <DialogTitle className="flex items-center gap-2 text-xl">
+                        <Heart className="w-5 h-5 text-rose-500" />
+                        Support X-pressionist
                       </DialogTitle>
-                      <DialogDescription className="text-base pt-2 text-muted-foreground">
-                        Every donation goes straight to Grok + Gemini usage. Thank you for keeping the brushes moving.
+                      <DialogDescription>
+                        Every donation goes straight to API costs. Thank you.
                       </DialogDescription>
                     </DialogHeader>
-
                     <div className="space-y-3 pt-4">
                       <a href="https://buymeacoffee.com/applelampsg" target="_blank" rel="noopener noreferrer" className="block">
-                        <Button className="btn-press w-full h-12 text-base" onClick={() => setDonateOpen(false)}>
+                        <Button className="w-full h-12" onClick={() => setDonateOpen(false)}>
                           <Coffee className="w-5 h-5 mr-2" />
                           Buy Me a Coffee
                         </Button>
                       </a>
-
                       <a href="https://cash.app/$applelamps" target="_blank" rel="noopener noreferrer" className="block">
-                        <Button variant="outline" className="btn-press w-full h-12 text-base" onClick={() => setDonateOpen(false)}>
+                        <Button variant="outline" className="w-full h-12" onClick={() => setDonateOpen(false)}>
                           <DollarSign className="w-5 h-5 mr-2" />
                           CashApp: $applelamps
                         </Button>
@@ -403,39 +297,16 @@ export default function Home() {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button variant="ghost" className="btn-press gap-2" onClick={focusInput}>
-                  <Sparkle className="w-4 h-4" />
-                  Try it now
-                </Button>
               </div>
-            </div>
 
-            <Card className="glass-card shadow-xl animate-scale-in w-full max-w-3xl mx-auto">
-              <CardHeader className="pb-4 space-y-4 text-center">
-                <CardTitle className="flex items-center justify-center gap-2 text-foreground text-xl font-semibold">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <span>Generate your custom artwork</span>
-                </CardTitle>
-                <CardDescription className="text-muted-foreground text-sm leading-relaxed max-w-xl mx-auto">
-                  We analyze the handle&apos;s recent posts to craft an art brief, then render a polished illustration in seconds.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-1 pb-6 px-6 sm:px-7">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="handle-input" className="text-sm font-medium text-foreground">
-                      X username
-                    </Label>
-                    <Badge variant="outline" className="text-xs font-normal">
-                      Public handles only
-                    </Badge>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+              {/* Right: Input Form */}
+              <div className="bg-white rounded-2xl border border-black/10 p-6 lg:p-8 shadow-2xl shadow-black/5">
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <div className="flex-1 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">@</span>
-                      <Input
-                        id="handle-input"
-                        placeholder="midjourney"
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-medium">@</span>
+                      <input
+                        type="text"
                         value={handle}
                         onChange={(e) => {
                           setHandle(e.target.value);
@@ -443,385 +314,213 @@ export default function Home() {
                         }}
                         onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleGenerate()}
                         disabled={isBusy}
-                        className="pl-8 text-base"
+                        placeholder="username"
+                        className="w-full pl-10 pr-4 py-4 text-lg bg-neutral-50 border border-black/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/10 transition-shadow"
                         autoComplete="off"
                         spellCheck={false}
                       />
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
+                        <button
                           disabled={isBusy}
-                          size="lg"
-                          className="btn-press bg-gradient-to-r from-black to-neutral-800 text-white font-semibold hover:from-neutral-800 hover:to-neutral-700 hover:scale-[1.02] hover:shadow-xl transition-all duration-300 shadow-lg w-full sm:w-auto sm:min-w-[180px]"
+                          className="px-6 py-4 bg-black text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              Generating image...
-                            </>
-                          ) : isRoasting ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              Crafting roast...
-                            </>
-                          ) : isProfiling ? (
-                            <>
-                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                              Profiling subject...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-5 h-5 mr-2" />
-                              Generate
-                              <ChevronDown className="w-4 h-4 ml-2" />
-                            </>
-                          )}
-                        </Button>
+                          Generate
+                          <ChevronDown className="w-4 h-4" />
+                        </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56 bg-background border border-border shadow-lg z-50">
-                        <DropdownMenuItem onClick={handleGenerate} disabled={isBusy} className="cursor-pointer">
-                          <ImageIcon className="w-4 h-4 mr-2" />
-                          Generate image
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem onClick={handleGenerate} disabled={isBusy}>
+                          Create artwork
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleRoast} disabled={isBusy} className="cursor-pointer">
-                          <Wand2 className="w-4 h-4 mr-2" />
-                          Generate roast letter
+                        <DropdownMenuItem onClick={handleRoast} disabled={isBusy}>
+                          Roast letter
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleFbiProfile} disabled={isBusy} className="cursor-pointer">
-                          <FileText className="w-4 h-4 mr-2" />
-                          FBI behavioral profile
+                        <DropdownMenuItem onClick={handleFbiProfile} disabled={isBusy}>
+                          FBI profile
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
+
                   {inputError && (
-                    <p className="text-sm text-destructive flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      {inputError}
-                    </p>
+                    <p className="text-sm text-red-500">{inputError}</p>
+                  )}
+
+                  {/* Quick suggestions */}
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="text-neutral-400">Try:</span>
+                    {SUGGESTION_HANDLES.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          setHandle(s);
+                          setInputError('');
+                        }}
+                        disabled={isBusy}
+                        className="text-black hover:underline disabled:opacity-50"
+                      >
+                        @{s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Error */}
+            {globalError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+                {globalError}
+              </div>
+            )}
+
+            {/* Results Section */}
+            {result && (
+              <div className="space-y-8" id="results">
+                {/* Generated Image */}
+                <div className="relative rounded-2xl overflow-hidden border border-black/10 shadow-2xl shadow-black/10 bg-white">
+                  {isImageLoading && (
+                    <div className="aspect-square max-w-2xl mx-auto flex items-center justify-center bg-neutral-50">
+                      <Loader2 className="w-8 h-8 animate-spin text-neutral-400" />
+                    </div>
+                  )}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={result.imageUrl}
+                    alt={`Generated artwork for @${result.username}`}
+                    className={`w-full max-w-2xl mx-auto ${isImageLoading ? 'hidden' : 'block'}`}
+                    onLoad={() => setIsImageLoading(false)}
+                    onError={() => setIsImageLoading(false)}
+                  />
+
+                  {/* Floating actions */}
+                  {!isImageLoading && (
+                    <div className="absolute bottom-4 right-4 flex gap-2">
+                      <button
+                        onClick={handleDownload}
+                        className="px-4 py-2 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-medium hover:bg-white transition-colors shadow-lg flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </button>
+                    </div>
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground pt-1 text-center">
-                  <span className="uppercase tracking-wide text-[0.7rem] font-semibold text-muted-foreground/80">Quick suggestions:</span>
-                  {SUGGESTION_HANDLES.map((suggestion) => (
-                    <Button
-                      key={suggestion}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="btn-press rounded-full px-3"
-                      disabled={isBusy}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                    >
-                      @{suggestion}
-                    </Button>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-center pt-2">
-                  <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-border/80 bg-white/80 px-5 py-2 text-[0.75rem] sm:text-sm text-muted-foreground shadow-sm">
-                    <Sparkles className="h-4 w-4" />
-                    <span className="font-medium">Powered by Grok + Gemini</span>
-                    <span className="hidden sm:inline">-</span>
-                    <span className="inline-flex items-center gap-2 font-medium">
-                      API costs tamed by
-                      <Badge variant="secondary" className="font-semibold px-3 py-1 shadow-sm">
-                        @{DONORS[currentDonorIndex]}
-                      </Badge>
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {globalError && (
-              <Alert variant="destructive" className="animate-fade-in">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>We hit a snag</AlertTitle>
-                <AlertDescription>{globalError}</AlertDescription>
-              </Alert>
-            )}
-
-            {isLoading && (
-              <Card className="glass-card shadow-xl animate-fade-in">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center gap-2 text-foreground text-lg">
-                    <Wand2 className="w-5 h-5 text-primary animate-pulse-soft" />
-                    Creating your artwork
-                  </CardTitle>
-                  <CardDescription className="text-sm">Hang tight-this usually takes less than 10 seconds.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3.5">
-                  {/* Progress bar */}
-                  <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
-                    <div className="h-full w-1/4 bg-gradient-to-r from-primary to-primary/60 rounded-full animate-progress" />
-                  </div>
-                  {PROGRESS_STEPS.map(({ id, title, description, icon: Icon }) => {
-                    const activeIndex = loadingStage ? STAGE_ORDER.indexOf(loadingStage) : -1;
-                    const stepIndex = STAGE_ORDER.indexOf(id);
-                    const isActive = loadingStage === id;
-                    const isComplete = activeIndex > stepIndex;
-
-                    return (
-                      <div key={id} className={`flex items-start gap-3 rounded-xl border border-white/30 bg-white/40 backdrop-blur p-4 transition-all duration-300 ${isActive ? 'ring-2 ring-primary/30 bg-white/60' : ''}`}>
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-300 ${
-                            isComplete
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : isActive
-                                ? 'border-primary/60 bg-primary/10 text-primary animate-pulse-soft'
-                                : 'border-border bg-background text-muted-foreground'
-                          }`}
-                        >
-                          {isComplete ? <Check className="h-4 w-4" /> : <Icon className={`h-4 w-4 ${isActive ? 'animate-pulse-soft' : ''}`} />}
-                        </div>
-                        <div className="flex-1">
-                          <p className={`font-medium text-sm ${isActive ? 'text-primary' : 'text-foreground'}`}>{title}</p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-                        </div>
-                        {isActive && (
-                          <div className="flex items-center">
-                            <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            )}
-
-            <section className="space-y-5">
-              <div className="flex items-center gap-2">
-                <Sparkle className="h-4 w-4 text-primary" />
-                <h2 className="text-base font-semibold text-foreground">How it works</h2>
-              </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                {HOW_IT_WORKS.map(({ title, description, icon: Icon }) => (
-                  <Card key={title} className="card-hover border border-border/70 bg-white/70 backdrop-blur">
-                    <CardContent className="space-y-2.5 pt-5 pb-5">
-                      <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wide">
-                        <Icon className="h-4 w-4" />
-                        {title}
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            {result && (
-              <Card id="results" className="glass-card shadow-2xl animate-fade-in w-full">
-                <CardHeader>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                      <CardTitle className="flex items-center gap-2 text-foreground">
-                        <ImageIcon className="w-5 h-5 text-primary" />
-                        Your generated artwork
-                      </CardTitle>
-                      <Badge variant="secondary" className="flex items-center gap-2 w-fit">
-                        <Sparkles className="h-4 w-4" />@{result.username}
-                      </Badge>
-                    </div>
-                    <CardDescription>
-                      Save the image, reuse the prompt in your favourite editor, or refine with another handle.
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                        <Palette className="w-4 h-4 text-primary" />
-                        Creative brief
-                      </span>
-                      <Button onClick={handleCopyPrompt} size="sm" variant="ghost" className="h-8 px-3">
-                        {isCopied ? (
-                          <>
-                            <Check className="w-4 h-4 mr-1 text-green-500" />
-                            Copied!
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-4 h-4 mr-1" />
-                            Copy
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    <div className="rounded-xl border border-border/60 bg-white/60 p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                      {result.imagePrompt}
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-center p-3 border border-white/20 rounded-lg bg-black/10 result-image-container">
-                      {isImageLoading && (
-                        <div className="w-full aspect-square max-w-md rounded-md bg-neutral-100 image-loading flex items-center justify-center">
-                          <div className="text-center space-y-3">
-                            <Loader2 className="h-8 w-8 text-neutral-400 animate-spin mx-auto" />
-                            <p className="text-sm text-neutral-500">Loading image...</p>
-                          </div>
-                        </div>
-                      )}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={result.imageUrl}
-                        alt={`Generated from X account analysis for @${result.username}`}
-                        className={`max-w-full h-auto rounded-md shadow-2xl transition-opacity duration-300 ${isImageLoading ? 'opacity-0 absolute' : 'opacity-100'}`}
-                        onLoad={() => setIsImageLoading(false)}
-                        onError={(e) => {
-                          console.error('Image failed to load:', result.imageUrl);
-                          setIsImageLoading(false);
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                      <Button
-                        onClick={handleDownload}
-                        size="lg"
-                        className="btn-press bg-gradient-to-r from-black to-neutral-800 text-white font-semibold hover:from-neutral-800 hover:to-neutral-700 hover:scale-[1.02] hover:shadow-xl transition-all duration-300 shadow-lg"
-                      >
-                        <Download className="w-5 h-5 mr-2" />
-                        Download image
-                      </Button>
-                      <Button onClick={focusInput} variant="outline" size="lg" className="btn-press gap-2">
-                        <Sparkle className="w-4 h-4" />
-                        Generate another
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {roast && (
-              <Card className="glass-card shadow-2xl animate-fade-in w-full">
-                <CardHeader>
-                  <div className="flex flex-col gap-2">
-                    <CardTitle className="flex items-center gap-2 text-foreground">
-                      <Wand2 className="w-5 h-5 text-primary" />
-                      Roast Letter from Dr. Burn Notice
-                    </CardTitle>
-                    <CardDescription>
-                      A brutally honest therapy note for @{handle.trim().replace('@', '') || result?.username}
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={async () => {
-                        if (!roast) return;
-                        try {
-                          await navigator.clipboard.writeText(roast);
-                          setIsRoastCopied(true);
-                          toast.success('Roast letter copied!');
-                          setTimeout(() => setIsRoastCopied(false), 2000);
-                        } catch (error: unknown) {
-                          console.error('Roast copy error:', error);
-                          toast.error('Failed to copy roast');
-                        }
-                      }}
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 px-3"
-                    >
-                      {isRoastCopied ? (
-                        <>
-                          <Check className="w-4 h-4 mr-1 text-green-500" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4 mr-1" />
-                          Copy
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <div className="rounded-xl border border-border/60 bg-white/60 p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                    {roast}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {fbiProfile && (
-              <Card className="glass-card shadow-2xl animate-fade-in w-full border-black/20">
-                <CardHeader className="bg-neutral-100/80 rounded-t-xl">
-                  <div className="flex flex-col gap-2">
-                    <CardTitle className="flex items-center gap-2 text-foreground font-mono">
-                      <FileText className="w-5 h-5 text-black" />
-                      FBI Behavioral Analysis Report
-                    </CardTitle>
-                    <CardDescription className="font-mono text-xs">
-                      CLASSIFIED - Subject: @{handle.trim().replace('@', '') || result?.username} - Behavioral Analysis Unit
-                    </CardDescription>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-4">
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={async () => {
-                        if (!fbiProfile) return;
-                        try {
-                          await navigator.clipboard.writeText(fbiProfile);
-                          setIsProfileCopied(true);
-                          toast.success('FBI profile copied!');
-                          setTimeout(() => setIsProfileCopied(false), 2000);
-                        } catch (error: unknown) {
-                          console.error('Profile copy error:', error);
-                          toast.error('Failed to copy profile');
-                        }
-                      }}
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 px-3"
-                    >
-                      {isProfileCopied ? (
-                        <>
-                          <Check className="w-4 h-4 mr-1 text-green-500" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-4 h-4 mr-1" />
-                          Copy
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  <div className="rounded-xl border border-black/10 bg-neutral-50 p-5 text-sm leading-relaxed text-foreground whitespace-pre-wrap font-mono">
-                    {fbiProfile}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <footer className="text-center space-y-2 pt-8 pb-6">
-              <Separator className="mx-auto max-w-xs" />
-              <div className="text-sm text-muted-foreground space-y-1.5">
-                <p className="font-medium tracking-wide flex items-center justify-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Powered by Grok-4-Fast & Gemini Nano Banana
-                </p>
-                <p className="flex items-center justify-center gap-2">
-                  API costs covered by
-                  <a
-                    href="https://x.com/lamps_apple"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-foreground hover:underline font-medium transition-colors"
+                {/* Collapsible prompt */}
+                <div className="max-w-2xl mx-auto">
+                  <button
+                    onClick={() => setShowPrompt(!showPrompt)}
+                    className="text-neutral-500 hover:text-black transition-colors text-sm flex items-center gap-2"
                   >
-                    @lamps_apple
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </p>
+                    <ChevronDown className={`w-4 h-4 transition-transform ${showPrompt ? 'rotate-180' : ''}`} />
+                    {showPrompt ? 'Hide' : 'View'} creative brief
+                  </button>
+
+                  {showPrompt && (
+                    <div className="mt-4 p-4 bg-neutral-50 rounded-xl text-sm text-neutral-700 relative">
+                      <button
+                        onClick={handleCopyPrompt}
+                        className="absolute top-3 right-3 text-neutral-400 hover:text-black"
+                      >
+                        {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      </button>
+                      <p className="pr-8 whitespace-pre-wrap">{result.imagePrompt}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Generate another */}
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      setResult(null);
+                      setHandle('');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="text-neutral-500 hover:text-black transition-colors text-sm"
+                  >
+                    Generate another →
+                  </button>
+                </div>
               </div>
+            )}
+
+            {/* Roast Section - Unique styling */}
+            {roast && (
+              <div className="max-w-2xl mx-auto bg-amber-50 border-2 border-dashed border-amber-200 rounded-2xl p-6 lg:p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2 text-amber-700 font-semibold">
+                    <Flame className="w-5 h-5" />
+                    Therapy Session Notes
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(roast);
+                        setIsRoastCopied(true);
+                        toast.success('Copied!');
+                        setTimeout(() => setIsRoastCopied(false), 2000);
+                      } catch {
+                        toast.error('Copy failed');
+                      }
+                    }}
+                    className="text-amber-600 hover:text-amber-800"
+                  >
+                    {isRoastCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="font-serif text-lg leading-relaxed text-amber-900 whitespace-pre-wrap">
+                  {roast}
+                </div>
+              </div>
+            )}
+
+            {/* FBI Profile Section - Official document styling */}
+            {fbiProfile && (
+              <div className="max-w-3xl mx-auto bg-neutral-900 text-neutral-100 rounded-none p-8 lg:p-12 shadow-2xl">
+                <div className="border-b border-neutral-700 pb-4 mb-6 flex items-center justify-between">
+                  <div>
+                    <span className="text-red-500 font-bold tracking-wider">CLASSIFIED</span>
+                    <span className="text-neutral-500 ml-4 text-sm">BEHAVIORAL ANALYSIS UNIT</span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(fbiProfile);
+                        setIsProfileCopied(true);
+                        toast.success('Copied!');
+                        setTimeout(() => setIsProfileCopied(false), 2000);
+                      } catch {
+                        toast.error('Copy failed');
+                      }
+                    }}
+                    className="text-neutral-400 hover:text-white"
+                  >
+                    {isProfileCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-neutral-300">
+                  {fbiProfile}
+                </div>
+              </div>
+            )}
+
+            {/* Minimal Footer */}
+            <footer className="text-center text-sm text-neutral-400 pt-12">
+              Built by{' '}
+              <a
+                href="https://x.com/lamps_apple"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-black transition-colors"
+              >
+                @lamps_apple
+              </a>
+              {' · '}
+              Powered by Grok & Gemini
             </footer>
           </div>
         </main>

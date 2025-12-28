@@ -260,8 +260,10 @@ export default function Home() {
                   Powered by Grok AI
                 </div>
 
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] flex items-baseline gap-1">
-                  <img src="/x-logo.png" alt="X" className="h-[0.75em] inline-block" />
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] flex items-center gap-2">
+                  <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] fill-white">
+                    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                  </svg>
                   <span className="gradient-text">pressionist</span>
                 </h1>
                 <p className="text-xl text-neutral-400 max-w-md leading-relaxed font-light">
@@ -319,8 +321,10 @@ export default function Home() {
 
                     <div className="space-y-6 relative">
                       <div className="text-center">
-                        <h2 className="text-2xl font-black tracking-tighter text-white flex items-center justify-center gap-0.5">
-                          <img src="/x-logo.png" alt="X" className="h-[0.8em] inline-block" />
+                        <h2 className="text-2xl font-black tracking-tighter text-white flex items-center justify-center gap-1">
+                          <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] fill-white">
+                            <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                          </svg>
                           <span className="gradient-text">pressionist</span>
                         </h2>
                       </div>

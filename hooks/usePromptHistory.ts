@@ -11,7 +11,7 @@ export interface PromptHistoryItem {
 }
 
 const STORAGE_KEY = 'xpic-prompt-history';
-const MAX_HISTORY_ITEMS = 50;
+const MAX_HISTORY_ITEMS = 20; // Reduced from 50 - base64 images are large
 const SAVE_DEBOUNCE_MS = 500;
 
 export function usePromptHistory() {
@@ -50,17 +50,29 @@ export function usePromptHistory() {
 
     // Debounce writes by 500ms to reduce CPU usage
     saveTimeoutRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
-      } catch (error) {
-        console.error('Failed to save prompt history:', error);
-        // Handle quota exceeded error
-        if (error instanceof Error && error.name === 'QuotaExceededError') {
-          // Remove oldest items and try again
-          const reducedHistory = history.slice(0, Math.floor(MAX_HISTORY_ITEMS / 2));
-          setHistory(reducedHistory);
+      const saveWithRetry = (items: PromptHistoryItem[], attempt: number = 0): void => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        } catch (error) {
+          console.error('Failed to save prompt history:', error);
+          // Handle quota exceeded - progressively reduce history
+          if (attempt < 3 && items.length > 5) {
+            const reduced = items.slice(0, Math.ceil(items.length / 2));
+            console.log(`Quota exceeded, reducing history from ${items.length} to ${reduced.length} items`);
+            saveWithRetry(reduced, attempt + 1);
+            // Update state to match what we actually saved
+            if (attempt === 0) {
+              setHistory(reduced);
+            }
+          } else if (items.length > 0) {
+            // Last resort: clear everything
+            console.log('Clearing history due to persistent quota issues');
+            localStorage.removeItem(STORAGE_KEY);
+            setHistory([]);
+          }
         }
-      }
+      };
+      saveWithRetry(history);
     }, SAVE_DEBOUNCE_MS);
 
     // Cleanup timeout on unmount or before next effect

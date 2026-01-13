@@ -261,7 +261,7 @@ export default function Home() {
                 </div>
 
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] flex items-center gap-2">
-                  <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] fill-white">
+                  <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
                     <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
                   </svg>
                   <span className="gradient-text">pressionist</span>
@@ -307,109 +307,124 @@ export default function Home() {
                 </Dialog>
               </div>
 
-              {/* Right: Input Form - Phone Style */}
-              <div className="relative mx-auto w-full max-w-[400px]">
-                {/* Phone Frame */}
-                <div className="relative bg-[#0a0a0a] rounded-[3rem] border-[8px] border-[#1a1a1a] shadow-2xl overflow-hidden h-[600px] flex flex-col">
-                  {/* Dynamic Island */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 h-7 w-32 bg-black rounded-b-2xl z-20"></div>
+              {/* Right: Input Form - iPhone 16 Pro Style */}
+              <div className="iphone-container relative mx-auto">
+                {/* Ambient glow */}
+                <div className="phone-glow" />
 
-                  {/* Screen Content */}
-                  <div className="flex-1 p-6 flex flex-col justify-center relative z-10">
-                    {/* Glow effect inside phone */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+                {/* iPhone Frame */}
+                <div className="iphone-frame">
+                  {/* Side Buttons */}
+                  <div className="action-button" />
+                  <div className="volume-up" />
+                  <div className="volume-down" />
+                  <div className="power-button" />
 
-                    <div className="space-y-6 relative">
-                      <div className="text-center">
-                        <h2 className="text-2xl font-black tracking-tighter text-white flex items-center justify-center gap-1">
-                          <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] fill-white">
-                            <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-                          </svg>
-                          <span className="gradient-text">pressionist</span>
-                        </h2>
-                      </div>
+                  {/* Screen */}
+                  <div className="iphone-screen">
+                    {/* Dynamic Island */}
+                    <div className="dynamic-island" />
 
-                      <div className="space-y-3">
-                        <div className="relative group">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500 text-lg font-medium group-focus-within:text-rose-500 transition-colors">@</span>
-                          <input
-                            type="text"
-                            value={handle}
-                            onChange={(e) => {
-                              setHandle(e.target.value);
-                              if (inputError) setInputError('');
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleGenerate()}
-                            disabled={isBusy}
-                            placeholder="username"
-                            className="w-full pl-10 pr-12 py-4 text-lg bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500/50 transition-all"
-                            autoComplete="off"
-                            spellCheck={false}
-                          />
-                          <button
-                            onClick={handleGenerate}
-                            disabled={isBusy || !handle}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 disabled:opacity-0 transition-all"
-                          >
-                            <ChevronDown className="-rotate-90 w-4 h-4" />
-                          </button>
+                    {/* Screen Content */}
+                    <div className="iphone-screen-content justify-center">
+                      {/* Inner glow */}
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-rose-500/20 rounded-full blur-[100px] pointer-events-none" />
+
+                      <div className="space-y-5 relative">
+                        <div className="text-center pb-1">
+                          <h2 className="text-2xl font-black tracking-tight text-white flex items-center justify-center gap-1.5">
+                            <svg viewBox="0 0 24 24" className="h-[0.85em] w-[0.85em] shrink-0 fill-white">
+                              <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                            </svg>
+                            <span className="gradient-text">pressionist</span>
+                          </h2>
                         </div>
 
-                        <div className="space-y-2">
-                          <button
-                            onClick={handleGenerate}
-                            disabled={isBusy}
-                            className="w-full px-4 py-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium rounded-xl hover:bg-rose-500/20 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-                          >
-                            <Sparkles className="w-4 h-4" />
-                            Generate Photo
-                          </button>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              onClick={handleRoast}
+                        <div className="space-y-3">
+                          <div className="relative group">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-base font-semibold group-focus-within:text-rose-400 transition-colors">@</span>
+                            <input
+                              type="text"
+                              value={handle}
+                              onChange={(e) => {
+                                setHandle(e.target.value);
+                                if (inputError) setInputError('');
+                              }}
+                              onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleGenerate()}
                               disabled={isBusy}
-                              className="px-4 py-3 bg-amber-500/10 border border-amber-500/20 text-amber-500 font-medium rounded-xl hover:bg-amber-500/20 transition-colors disabled:opacity-50 text-sm flex items-center justify-center gap-2"
-                            >
-                              <Flame className="w-4 h-4" />
-                              Roast
-                            </button>
+                              placeholder="username"
+                              className="w-full pl-9 pr-12 py-3.5 text-base bg-white/[0.08] border border-white/[0.12] rounded-2xl text-white placeholder:text-neutral-500 focus:outline-none focus:bg-white/[0.12] focus:border-rose-500/50 focus:shadow-[0_0_0_3px_rgba(244,63,94,0.15)] transition-all"
+                              autoComplete="off"
+                              spellCheck={false}
+                            />
                             <button
-                              onClick={handleFbiProfile}
-                              disabled={isBusy}
-                              className="px-4 py-3 bg-blue-500/10 border border-blue-500/20 text-blue-400 font-medium rounded-xl hover:bg-blue-500/20 transition-colors disabled:opacity-50 text-sm"
+                              onClick={handleGenerate}
+                              disabled={isBusy || !handle}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 disabled:opacity-0 transition-all"
                             >
-                              FBI Profile
+                              <ChevronDown className="-rotate-90 w-4 h-4" />
                             </button>
                           </div>
+
+                          <div className="space-y-2.5">
+                            <button
+                              onClick={handleGenerate}
+                              disabled={isBusy}
+                              className="w-full px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                              Generate Photo
+                            </button>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                onClick={handleRoast}
+                                disabled={isBusy}
+                                className="px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                              >
+                                <Flame className="w-4 h-4" />
+                                Roast
+                              </button>
+                              <button
+                                onClick={handleFbiProfile}
+                                disabled={isBusy}
+                                className="px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                              >
+                                FBI Profile
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {inputError && (
+                          <p className="text-sm text-red-500 text-center bg-red-500/10 py-2 rounded-lg">{inputError}</p>
+                        )}
+
+                        {/* Quick suggestions */}
+                        <div className="flex flex-wrap justify-center gap-2 pt-3">
+                          {SUGGESTION_HANDLES.map((s) => (
+                            <button
+                              key={s}
+                              onClick={() => {
+                                setHandle(s);
+                                setInputError('');
+                              }}
+                              disabled={isBusy}
+                              className="px-3 py-1.5 text-xs font-medium rounded-full bg-white/[0.06] border border-white/[0.08] text-neutral-300 hover:text-white hover:bg-white/[0.12] hover:border-white/[0.15] transition-all"
+                            >
+                              @{s}
+                            </button>
+                          ))}
                         </div>
                       </div>
-
-                      {inputError && (
-                        <p className="text-sm text-red-500 text-center bg-red-500/10 py-2 rounded-lg">{inputError}</p>
-                      )}
-
-                      {/* Quick suggestions */}
-                      <div className="flex flex-wrap justify-center gap-2 text-xs pt-4">
-                        {SUGGESTION_HANDLES.map((s) => (
-                          <button
-                            key={s}
-                            onClick={() => {
-                              setHandle(s);
-                              setInputError('');
-                            }}
-                            disabled={isBusy}
-                            className="px-3 py-1.5 rounded-full bg-white/5 text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
-                          >
-                            @{s}
-                          </button>
-                        ))}
-                      </div>
                     </div>
-                  </div>
 
-                  {/* Phone Bottom Bar */}
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full"></div>
+                    {/* Home Indicator */}
+                    <div className="home-indicator" />
+                  </div>
                 </div>
+
+                {/* Floor shadow */}
+                <div className="phone-shadow" />
               </div>
             </div>
 
@@ -523,37 +538,72 @@ export default function Home() {
               </div>
             )}
 
-            {/* FBI Profile Section - Official document styling */}
+            {/* FBI Profile Section - Official classified document styling */}
             {fbiProfile && (
-              <div className="max-w-3xl mx-auto bg-[#0a0a0a] border border-white/10 text-neutral-100 rounded-none p-8 lg:p-12 shadow-2xl relative">
-                <div className="absolute top-4 right-4 opacity-20">
-                  <div className="w-24 h-24 border-4 border-white rounded-full flex items-center justify-center transform -rotate-12">
-                    <span className="text-xs font-bold">TOP SECRET</span>
+              <div className="max-w-4xl mx-auto select-text">
+                {/* Document container with realistic paper effect */}
+                <div className="relative bg-[#0c0c0c] border border-red-900/40 shadow-2xl shadow-red-900/20 overflow-hidden">
+                  {/* Top classified bar */}
+                  <div className="bg-gradient-to-r from-red-950/50 via-red-900/30 to-red-950/50 border-b border-red-800/40 px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-red-500 font-bold tracking-[0.25em] text-sm">CLASSIFIED</span>
+                      <span className="text-red-400/50 text-xs tracking-wider font-mono">// LAW ENFORCEMENT SENSITIVE</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(fbiProfile);
+                          setIsProfileCopied(true);
+                          toast.success('Copied to clipboard!');
+                          setTimeout(() => setIsProfileCopied(false), 2000);
+                        } catch (err) {
+                          console.error('Copy failed:', err);
+                          toast.error('Copy failed - try selecting manually');
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded transition-all"
+                    >
+                      {isProfileCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{isProfileCopied ? 'Copied!' : 'Copy Report'}</span>
+                    </button>
                   </div>
-                </div>
-                <div className="border-b border-white/10 pb-4 mb-6 flex items-center justify-between">
-                  <div>
-                    <span className="text-red-500 font-bold tracking-wider">CLASSIFIED</span>
-                    <span className="text-neutral-500 ml-4 text-sm">BEHAVIORAL ANALYSIS UNIT</span>
+
+                  {/* Document content */}
+                  <div className="p-8 lg:p-12 relative">
+                    {/* FBI seal watermark - positioned bottom right */}
+                    <div className="absolute bottom-24 right-8 opacity-[0.04] pointer-events-none select-none">
+                      <svg viewBox="0 0 100 100" className="w-28 h-28 text-white">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2"/>
+                        <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="1"/>
+                        <text x="50" y="35" textAnchor="middle" fontSize="6" fill="currentColor" fontWeight="bold">FEDERAL BUREAU</text>
+                        <text x="50" y="55" textAnchor="middle" fontSize="8" fill="currentColor" fontWeight="bold">FBI</text>
+                        <text x="50" y="70" textAnchor="middle" fontSize="6" fill="currentColor" fontWeight="bold">OF INVESTIGATION</text>
+                      </svg>
+                    </div>
+
+                    {/* Report content with proper formatting */}
+                    <div className="text-[13px] leading-[1.9] whitespace-pre-wrap font-mono text-neutral-300 select-text cursor-text [&>*]:select-text">
+                      {fbiProfile}
+                    </div>
+
+                    {/* Document footer */}
+                    <div className="mt-12 pt-6 border-t border-red-900/30">
+                      <div className="flex items-center justify-between text-[10px] text-neutral-600">
+                        <div className="tracking-[0.15em]">UNCLASSIFIED WHEN SEPARATED FROM ATTACHMENTS</div>
+                        <div className="tracking-[0.1em]">PAGE 1 OF 1</div>
+                      </div>
+                      <div className="text-center mt-4">
+                        <div className="text-[9px] tracking-[0.2em] text-red-500/40 font-medium">
+                          UNAUTHORIZED DISCLOSURE SUBJECT TO CRIMINAL SANCTIONS
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <button
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(fbiProfile);
-                        setIsProfileCopied(true);
-                        toast.success('Copied!');
-                        setTimeout(() => setIsProfileCopied(false), 2000);
-                      } catch {
-                        toast.error('Copy failed');
-                      }
-                    }}
-                    className="text-neutral-500 hover:text-white"
-                  >
-                    {isProfileCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-neutral-400">
-                  {fbiProfile}
+
+                  {/* Bottom classified bar */}
+                  <div className="bg-gradient-to-r from-red-950/50 via-red-900/30 to-red-950/50 border-t border-red-800/40 px-6 py-2 text-center">
+                    <span className="text-red-500/60 font-bold tracking-[0.3em] text-[11px]">SECRET // NOFORN // ORCON</span>
+                  </div>
                 </div>
               </div>
             )}

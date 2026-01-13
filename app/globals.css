@@ -278,3 +278,271 @@ input:focus {
   background: rgba(0, 0, 0, 0.12);
   color: inherit;
 }
+
+/* ========================================
+   iPhone 16 Pro Mockup Styles
+   ======================================== */
+
+/* Container with perspective */
+.iphone-container {
+  --phone-width: min(320px, 85vw);
+  position: relative;
+  perspective: 1000px;
+}
+
+@media (min-width: 1024px) {
+  .iphone-container {
+    --phone-width: 340px;
+  }
+}
+
+/* Main Frame - Black Titanium */
+.iphone-frame {
+  position: relative;
+  width: var(--phone-width);
+  aspect-ratio: 1 / 2.17;
+  border-radius: 44px;
+
+  /* Black Titanium gradient */
+  background: linear-gradient(
+    145deg,
+    #2a2a2c 0%,
+    #3a3a3c 15%,
+    #252527 30%,
+    #333335 50%,
+    #2d2d2f 70%,
+    #3f3f41 85%,
+    #2a2a2c 100%
+  );
+
+  /* Depth and shadows */
+  box-shadow:
+    0 30px 60px -15px rgba(0, 0, 0, 0.5),
+    0 15px 30px -10px rgba(0, 0, 0, 0.4),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+
+  transition: transform 0.3s ease;
+}
+
+/* Inner bezel */
+.iphone-frame::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 41px;
+  background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  z-index: 1;
+}
+
+/* Screen */
+.iphone-screen {
+  position: absolute;
+  inset: 6px;
+  border-radius: 38px;
+  background: #0a0a0a;
+  overflow: hidden;
+  z-index: 10;
+}
+
+/* Screen glass reflection */
+.iphone-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Screen edge highlight */
+.iphone-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 101;
+}
+
+/* Dynamic Island */
+.dynamic-island {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  border-radius: 19px;
+  background: linear-gradient(180deg, #000 0%, #080808 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.9),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.02),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+  z-index: 30;
+}
+
+/* Camera lens */
+.dynamic-island::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #1a1a2e, #000);
+  box-shadow: inset 0 0 2px rgba(80, 80, 180, 0.15);
+}
+
+/* Sensor */
+.dynamic-island::after {
+  content: '';
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #222, #0a0a0a);
+}
+
+/* Screen content area */
+.iphone-screen-content {
+  position: relative;
+  height: 100%;
+  padding: 56px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  z-index: 5;
+}
+
+/* Home Indicator */
+.home-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 134px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.22);
+  z-index: 50;
+}
+
+/* Side Buttons */
+.action-button {
+  position: absolute;
+  left: -4px;
+  top: 100px;
+  width: 4px;
+  height: 28px;
+  border-radius: 2px 0 0 2px;
+  background: linear-gradient(90deg, #4a4a4c, #5a5a5c, #4a4a4c);
+  box-shadow: -1px 0 2px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+.volume-up {
+  position: absolute;
+  left: -4px;
+  top: 140px;
+  width: 4px;
+  height: 42px;
+  border-radius: 2px 0 0 2px;
+  background: linear-gradient(90deg, #4a4a4c, #5a5a5c, #4a4a4c);
+  box-shadow: -1px 0 2px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+.volume-down {
+  position: absolute;
+  left: -4px;
+  top: 195px;
+  width: 4px;
+  height: 42px;
+  border-radius: 2px 0 0 2px;
+  background: linear-gradient(90deg, #4a4a4c, #5a5a5c, #4a4a4c);
+  box-shadow: -1px 0 2px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+.power-button {
+  position: absolute;
+  right: -4px;
+  top: 160px;
+  width: 4px;
+  height: 65px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(270deg, #4a4a4c, #5a5a5c, #4a4a4c);
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+}
+
+/* Ambient glow behind phone */
+.phone-glow {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 77, 77, 0.15) 0%,
+    rgba(249, 203, 40, 0.08) 40%,
+    transparent 70%
+  );
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Floor shadow */
+.phone-shadow {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 20px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.4) 0%,
+    transparent 70%
+  );
+  filter: blur(10px);
+  z-index: -1;
+}
+
+/* Animations */
+@keyframes phone-float-in {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes subtle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.iphone-container {
+  animation: phone-float-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.iphone-frame {
+  animation: subtle-float 5s ease-in-out infinite;
+  animation-delay: 0.7s;
+}

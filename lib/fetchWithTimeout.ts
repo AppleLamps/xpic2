@@ -30,8 +30,10 @@ export async function fetchWithTimeout(
  * Default timeout values for different API calls
  */
 export const API_TIMEOUTS = {
-  /** xAI Grok API - analysis can take longer */
+  /** xAI Grok API - standard analysis */
   GROK_ANALYSIS: 60000,
+  /** xAI Grok API - comprehensive OSINT requires more time for extensive searches */
+  OSINT_ANALYSIS: 180000,
   /** OpenRouter image generation */
   IMAGE_GENERATION: 45000,
   /** GetImg.ai Flux - typically faster */

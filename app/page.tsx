@@ -13,6 +13,7 @@ import {
   Coffee,
   DollarSign,
   Sparkles,
+  Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -34,10 +35,13 @@ export default function Home() {
   const [result, setResult] = useState<{ imagePrompt: string; imageUrl: string; username: string } | null>(null);
   const [roast, setRoast] = useState<string | null>(null);
   const [fbiProfile, setFbiProfile] = useState<string | null>(null);
+  const [osintReport, setOsintReport] = useState<string | null>(null);
+  const [isOsintProfiling, setIsOsintProfiling] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isRoastCopied, setIsRoastCopied] = useState(false);
   const [isProfileCopied, setIsProfileCopied] = useState(false);
+  const [isOsintCopied, setIsOsintCopied] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -57,6 +61,7 @@ export default function Home() {
     setResult(null);
     setRoast(null);
     setFbiProfile(null);
+    setOsintReport(null);
     setLoadingStage('analyze');
 
     try {
@@ -201,6 +206,42 @@ export default function Home() {
     }
   };
 
+  const handleOsintProfile = async () => {
+    const normalizedHandle = handle.trim().replace('@', '');
+
+    if (!normalizedHandle) {
+      setInputError('Enter a username');
+      return;
+    }
+
+    setIsOsintProfiling(true);
+    setInputError('');
+    setGlobalError('');
+    setOsintReport(null);
+
+    try {
+      const response = await fetch('/api/osint-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handle: normalizedHandle, timeRange: '90' }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate OSINT report');
+      if (!data?.osintReport) throw new Error('Failed to generate OSINT report');
+
+      setOsintReport(data.osintReport);
+      toast.success('OSINT dossier ready!');
+    } catch (err: unknown) {
+      console.error('OSINT error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setGlobalError(message);
+      toast.error(message);
+    } finally {
+      setIsOsintProfiling(false);
+    }
+  };
+
   const handleCopyPrompt = async () => {
     if (!result?.imagePrompt) return;
     try {
@@ -213,7 +254,7 @@ export default function Home() {
     }
   };
 
-  const isBusy = isLoading || isRoasting || isProfiling;
+  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -231,7 +272,7 @@ export default function Home() {
         </div>
 
         {/* Full-page loading overlay */}
-        {(isLoading || isRoasting || isProfiling) && (
+        {(isLoading || isRoasting || isProfiling || isOsintProfiling) && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center">
             <div className="text-center space-y-6">
               <div className="w-16 h-16 border-4 border-white/20 border-t-[#ff4d4d] rounded-full animate-spin mx-auto" />
@@ -241,6 +282,7 @@ export default function Home() {
                   {isLoading && loadingStage === 'image' && 'Painting your portrait...'}
                   {isRoasting && 'Crafting your roast...'}
                   {isProfiling && 'Analyzing behavior patterns...'}
+                  {isOsintProfiling && 'Compiling intelligence dossier...'}
                 </p>
                 <p className="text-neutral-400 mt-2">This takes about 10 seconds</p>
               </div>
@@ -375,21 +417,29 @@ export default function Home() {
                               <Sparkles className="w-4 h-4" />
                               Generate Photo
                             </button>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-3 gap-2">
                               <button
                                 onClick={handleRoast}
                                 disabled={isBusy}
-                                className="px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                                className="px-3 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
                               >
-                                <Flame className="w-4 h-4" />
+                                <Flame className="w-3.5 h-3.5" />
                                 Roast
                               </button>
                               <button
                                 onClick={handleFbiProfile}
                                 disabled={isBusy}
-                                className="px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                                className="px-3 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
                               >
-                                FBI Profile
+                                FBI
+                              </button>
+                              <button
+                                onClick={handleOsintProfile}
+                                disabled={isBusy}
+                                className="px-3 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                              >
+                                <Search className="w-3.5 h-3.5" />
+                                OSINT
                               </button>
                             </div>
                           </div>
@@ -603,6 +653,72 @@ export default function Home() {
                   {/* Bottom classified bar */}
                   <div className="bg-gradient-to-r from-red-950/50 via-red-900/30 to-red-950/50 border-t border-red-800/40 px-6 py-2 text-center">
                     <span className="text-red-500/60 font-bold tracking-[0.3em] text-[11px]">SECRET // NOFORN // ORCON</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* OSINT Dossier Section - Intelligence analyst styling */}
+            {osintReport && (
+              <div className="max-w-4xl mx-auto select-text">
+                {/* Document container with intelligence agency aesthetic */}
+                <div className="relative bg-[#0a0d0f] border border-emerald-900/40 shadow-2xl shadow-emerald-900/20 overflow-hidden">
+                  {/* Top classification bar */}
+                  <div className="bg-gradient-to-r from-emerald-950/50 via-emerald-900/30 to-emerald-950/50 border-b border-emerald-800/40 px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-emerald-400 font-bold tracking-[0.25em] text-sm">INTERNAL CLASSIFICATION</span>
+                      <span className="text-emerald-400/50 text-xs tracking-wider font-mono">// OSINT DOSSIER</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(osintReport);
+                          setIsOsintCopied(true);
+                          toast.success('Copied to clipboard!');
+                          setTimeout(() => setIsOsintCopied(false), 2000);
+                        } catch (err) {
+                          console.error('Copy failed:', err);
+                          toast.error('Copy failed - try selecting manually');
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded transition-all"
+                    >
+                      {isOsintCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{isOsintCopied ? 'Copied!' : 'Copy Dossier'}</span>
+                    </button>
+                  </div>
+
+                  {/* Document content */}
+                  <div className="p-8 lg:p-12 relative">
+                    {/* Watermark */}
+                    <div className="absolute bottom-24 right-8 opacity-[0.03] pointer-events-none select-none">
+                      <div className="text-emerald-500 font-bold tracking-[0.3em] text-6xl rotate-[-15deg]">
+                        OSINT
+                      </div>
+                    </div>
+
+                    {/* Report content with proper formatting */}
+                    <div className="text-[13px] leading-[1.9] whitespace-pre-wrap font-mono text-neutral-300 select-text cursor-text [&>*]:select-text">
+                      {osintReport}
+                    </div>
+
+                    {/* Document footer */}
+                    <div className="mt-12 pt-6 border-t border-emerald-900/30">
+                      <div className="flex items-center justify-between text-[10px] text-neutral-600">
+                        <div className="tracking-[0.15em]">OPEN SOURCE INTELLIGENCE ANALYSIS</div>
+                        <div className="tracking-[0.1em]">UNCLASSIFIED // PUBLIC DATA</div>
+                      </div>
+                      <div className="text-center mt-4">
+                        <div className="text-[9px] tracking-[0.2em] text-emerald-500/40 font-medium">
+                          BASED ON PUBLICLY AVAILABLE INFORMATION ONLY
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom bar */}
+                  <div className="bg-gradient-to-r from-emerald-950/50 via-emerald-900/30 to-emerald-950/50 border-t border-emerald-800/40 px-6 py-2 text-center">
+                    <span className="text-emerald-500/60 font-bold tracking-[0.3em] text-[11px]">USER CLASSIFICATION DOSSIER</span>
                   </div>
                 </div>
               </div>

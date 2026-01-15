@@ -14,6 +14,7 @@ import {
   DollarSign,
   Sparkles,
   Search,
+  Brain,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -37,11 +38,14 @@ export default function Home() {
   const [fbiProfile, setFbiProfile] = useState<string | null>(null);
   const [osintReport, setOsintReport] = useState<string | null>(null);
   const [isOsintProfiling, setIsOsintProfiling] = useState(false);
+  const [characterAnalysis, setCharacterAnalysis] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isRoastCopied, setIsRoastCopied] = useState(false);
   const [isProfileCopied, setIsProfileCopied] = useState(false);
   const [isOsintCopied, setIsOsintCopied] = useState(false);
+  const [isAnalysisCopied, setIsAnalysisCopied] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [showPrompt, setShowPrompt] = useState(false);
 
@@ -62,6 +66,7 @@ export default function Home() {
     setRoast(null);
     setFbiProfile(null);
     setOsintReport(null);
+    setCharacterAnalysis(null);
     setLoadingStage('analyze');
 
     try {
@@ -242,6 +247,42 @@ export default function Home() {
     }
   };
 
+  const handleCharacterAnalysis = async () => {
+    const normalizedHandle = handle.trim().replace('@', '');
+
+    if (!normalizedHandle) {
+      setInputError('Enter a username');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setInputError('');
+    setGlobalError('');
+    setCharacterAnalysis(null);
+
+    try {
+      const response = await fetch('/api/character-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handle: normalizedHandle }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate character analysis');
+      if (!data?.characterAnalysis) throw new Error('Failed to generate character analysis');
+
+      setCharacterAnalysis(data.characterAnalysis);
+      toast.success('Character analysis ready!');
+    } catch (err: unknown) {
+      console.error('Character analysis error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setGlobalError(message);
+      toast.error(message);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleCopyPrompt = async () => {
     if (!result?.imagePrompt) return;
     try {
@@ -254,7 +295,7 @@ export default function Home() {
     }
   };
 
-  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling;
+  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling || isAnalyzing;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -272,7 +313,7 @@ export default function Home() {
         </div>
 
         {/* Full-page loading overlay */}
-        {(isLoading || isRoasting || isProfiling || isOsintProfiling) && (
+        {(isLoading || isRoasting || isProfiling || isOsintProfiling || isAnalyzing) && (
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center">
             <div className="text-center space-y-6">
               <div className="w-16 h-16 border-4 border-white/20 border-t-[#ff4d4d] rounded-full animate-spin mx-auto" />
@@ -283,8 +324,9 @@ export default function Home() {
                   {isRoasting && 'Crafting your roast...'}
                   {isProfiling && 'Analyzing behavior patterns...'}
                   {isOsintProfiling && 'Compiling intelligence dossier...'}
+                  {isAnalyzing && 'Diving deep into their psyche...'}
                 </p>
-                <p className="text-neutral-400 mt-2">This takes about 10 seconds</p>
+                <p className="text-neutral-400 mt-2">{isAnalyzing || isOsintProfiling ? 'This may take up to 30 seconds' : 'This takes about 10 seconds'}</p>
               </div>
             </div>
           </div>
@@ -417,11 +459,11 @@ export default function Home() {
                               <Sparkles className="w-4 h-4" />
                               Generate Photo
                             </button>
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-4 gap-2">
                               <button
                                 onClick={handleRoast}
                                 disabled={isBusy}
-                                className="px-3 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                                className="px-2 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1"
                               >
                                 <Flame className="w-3.5 h-3.5" />
                                 Roast
@@ -429,17 +471,25 @@ export default function Home() {
                               <button
                                 onClick={handleFbiProfile}
                                 disabled={isBusy}
-                                className="px-3 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                                className="px-2 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1"
                               >
                                 FBI
                               </button>
                               <button
                                 onClick={handleOsintProfile}
                                 disabled={isBusy}
-                                className="px-3 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                                className="px-2 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1"
                               >
                                 <Search className="w-3.5 h-3.5" />
                                 OSINT
+                              </button>
+                              <button
+                                onClick={handleCharacterAnalysis}
+                                disabled={isBusy}
+                                className="px-2 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1"
+                              >
+                                <Brain className="w-3.5 h-3.5" />
+                                Analysis
                               </button>
                             </div>
                           </div>
@@ -719,6 +769,71 @@ export default function Home() {
                   {/* Bottom bar */}
                   <div className="bg-gradient-to-r from-emerald-950/50 via-emerald-900/30 to-emerald-950/50 border-t border-emerald-800/40 px-6 py-2 text-center">
                     <span className="text-emerald-500/60 font-bold tracking-[0.3em] text-[11px]">USER CLASSIFICATION DOSSIER</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Character Analysis Section - Psychological profile styling */}
+            {characterAnalysis && (
+              <div className="max-w-4xl mx-auto select-text">
+                {/* Document container with therapist notes aesthetic */}
+                <div className="relative bg-[#0f0a14] border border-purple-900/40 shadow-2xl shadow-purple-900/20 overflow-hidden rounded-lg">
+                  {/* Top bar */}
+                  <div className="bg-gradient-to-r from-purple-950/50 via-purple-900/30 to-purple-950/50 border-b border-purple-800/40 px-6 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <Brain className="w-5 h-5 text-purple-400" />
+                      <span className="text-purple-400 font-bold tracking-[0.15em] text-sm">CHARACTER ANALYSIS</span>
+                      <span className="text-purple-400/50 text-xs tracking-wider font-mono">// PSYCHOLOGICAL PROFILE</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(characterAnalysis);
+                          setIsAnalysisCopied(true);
+                          toast.success('Copied to clipboard!');
+                          setTimeout(() => setIsAnalysisCopied(false), 2000);
+                        } catch (err) {
+                          console.error('Copy failed:', err);
+                          toast.error('Copy failed - try selecting manually');
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded transition-all"
+                    >
+                      {isAnalysisCopied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                      <span>{isAnalysisCopied ? 'Copied!' : 'Copy Analysis'}</span>
+                    </button>
+                  </div>
+
+                  {/* Document content */}
+                  <div className="p-8 lg:p-12 relative">
+                    {/* Watermark */}
+                    <div className="absolute bottom-24 right-8 opacity-[0.03] pointer-events-none select-none">
+                      <Brain className="w-32 h-32 text-purple-500" />
+                    </div>
+
+                    {/* Report content */}
+                    <div className="text-[14px] leading-[2] whitespace-pre-wrap font-serif text-neutral-300 select-text cursor-text [&>*]:select-text">
+                      {characterAnalysis}
+                    </div>
+
+                    {/* Document footer */}
+                    <div className="mt-12 pt-6 border-t border-purple-900/30">
+                      <div className="flex items-center justify-between text-[10px] text-neutral-600">
+                        <div className="tracking-[0.15em]">BEHAVIORAL ANALYSIS REPORT</div>
+                        <div className="tracking-[0.1em]">BASED ON PUBLIC POSTS</div>
+                      </div>
+                      <div className="text-center mt-4">
+                        <div className="text-[9px] tracking-[0.2em] text-purple-500/40 font-medium">
+                          FOR ENTERTAINMENT PURPOSES ONLY
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom bar */}
+                  <div className="bg-gradient-to-r from-purple-950/50 via-purple-900/30 to-purple-950/50 border-t border-purple-800/40 px-6 py-2 text-center">
+                    <span className="text-purple-500/60 font-bold tracking-[0.3em] text-[11px]">DEEP CHARACTER PROFILE</span>
                   </div>
                 </div>
               </div>

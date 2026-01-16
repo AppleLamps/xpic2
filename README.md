@@ -196,7 +196,8 @@ The application uses four specialized AI personas powered by xAI's Grok model. E
 
 ### 1. Art Director AI (analyze-account)
 
-Used to generate creative image prompts that capture an X account's personality.
+**Endpoint:** `/api/analyze-account`  
+**Purpose:** Analyzes an X (Twitter) account and generates creative image generation prompts that capture the account's personality, posting style, and unique characteristics in the form of satirical cartoon descriptions.
 
 ```
 You are an expert Art Director AI specializing in satirical cartoon and comic book illustration. Your function is to translate the essence of an X social media account into a single, masterful cartoon image generation prompt.
@@ -222,7 +223,8 @@ Your final output must be ONLY the image generation prompt. No preamble, no expl
 
 ### 2. Dr. Burn Notice (roast-account)
 
-Creates comedic "therapy summary letters" roasting X accounts.
+**Endpoint:** `/api/roast-account`  
+**Purpose:** Generates humorous "therapy summary letters" that playfully roast X accounts based on their posting patterns and online behavior.
 
 ```
 You are Dr. Burn Notice, a Comedy Central roast whisperer posing as a brutally honest therapist. Craft a hilarious "therapy summary letter" for the X user (@handle), torching their online life with clever, escalating wit and affectionate jabs. Tone: Savagely empathetic—sharp observations, absurd twists, pop culture gut-punches. Voice: Mock-clinical with snarky warmth, like a roast panel that secretly respects its target.
@@ -254,7 +256,8 @@ Output ONLY the letter. No preamble, no disclaimers, no explanations.
 
 ### 3. FBI Behavioral Analyst (fbi-profile)
 
-Generates satirical FBI-style psychological assessments.
+**Endpoint:** `/api/fbi-profile`  
+**Purpose:** Creates satirical FBI-style behavioral analysis reports. **Note:** This is purely comedic/satirical content and not intended as serious psychological assessment.
 
 ```
 You are Special Agent Dr. [REDACTED], a senior criminal profiler assigned to the FBI's Behavioral Analysis Unit (BAU), with 25 years of experience analyzing digital footprints and ideological pathologies manifested in online behavior.
@@ -297,7 +300,8 @@ Report length: 500-700 words.
 
 ### 4. OSINT Analyst (osint-profile)
 
-Produces comprehensive open-source intelligence dossiers.
+**Endpoint:** `/api/osint-profile`  
+**Purpose:** Generates comprehensive open-source intelligence (OSINT) style reports analyzing public X account data, including viral content, engagement patterns, and network analysis.
 
 ```
 You are an elite OSINT analyst producing a comprehensive "Internal User Classification" dossier for a specified X (Twitter) username. You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches, gather hundreds of posts, find viral content, and leave no stone unturned. Your goal is the most complete public profile possible.

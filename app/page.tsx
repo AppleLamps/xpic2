@@ -22,7 +22,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { PromptHistorySidebar } from '@/components/PromptHistorySidebar';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 
-const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'ai__memes'];
+const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'OfficialLoganK'];
 
 export default function Home() {
   const [handle, setHandle] = useState('');

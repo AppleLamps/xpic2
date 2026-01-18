@@ -297,9 +297,20 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               {/* Left: Title & Description */}
               <div className="space-y-8">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-amber-500 mb-4">
-                  <Flame className="w-3 h-3" />
-                  Powered by Grok AI
+                <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-amber-500">
+                    <Flame className="w-3 h-3" />
+                    Powered by Grok AI
+                  </div>
+                  <a
+                    href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-emerald-500 hover:bg-white/10 transition-colors"
+                  >
+                    <DollarSign className="w-3 h-3" />
+                    Funded by Grokify CA: 8F2Fvu...BAGs
+                  </a>
                 </div>
 
                 <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] flex items-center gap-2">
@@ -623,8 +634,8 @@ export default function Home() {
                     {/* FBI seal watermark - positioned bottom right */}
                     <div className="absolute bottom-24 right-8 opacity-[0.04] pointer-events-none select-none">
                       <svg viewBox="0 0 100 100" className="w-28 h-28 text-white">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="1"/>
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2" />
+                        <circle cx="50" cy="50" r="35" fill="none" stroke="currentColor" strokeWidth="1" />
                         <text x="50" y="35" textAnchor="middle" fontSize="6" fill="currentColor" fontWeight="bold">FEDERAL BUREAU</text>
                         <text x="50" y="55" textAnchor="middle" fontSize="8" fill="currentColor" fontWeight="bold">FBI</text>
                         <text x="50" y="70" textAnchor="middle" fontSize="6" fill="currentColor" fontWeight="bold">OF INVESTIGATION</text>

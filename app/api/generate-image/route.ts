@@ -107,14 +107,23 @@ export async function POST(req: NextRequest) {
       const rawData = await response.json();
       const validationResult = GeminiImageResponseSchema.safeParse(rawData);
 
+      // Handle validation failure - likely a safety filter blocking the response
       if (!validationResult.success) {
         console.error('Invalid Gemini API response structure:', validationResult.error);
-        throw new Error('Invalid response from Gemini API');
+        console.log('Raw response:', JSON.stringify(rawData).substring(0, 500));
+
+        // Treat validation failure as potential safety block - retry with safer prompt
+        if (!isRetry) {
+          console.log('Validation failed (likely safety filter) - regenerating prompt with safety guidelines');
+          return await regenerateWithSaferPrompt(handle);
+        }
+
+        throw new Error('Invalid response from Gemini API - content may be restricted');
       }
 
       const imageResult = extractGeminiImage(validationResult.data);
 
-      // Check for safety block
+      // Check for explicit safety block
       if (imageResult && 'safetyBlocked' in imageResult) {
         if (isRetry) {
           console.error('Image blocked by safety even after regenerating with guidelines');
@@ -122,34 +131,7 @@ export async function POST(req: NextRequest) {
         }
 
         console.log('Safety block detected - regenerating prompt with safety guidelines');
-
-        // Call analyze-account again with safety guidelines enabled
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const analyzeResponse = await fetchWithTimeout(
-          `${baseUrl}/api/analyze-account`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              handle: handle,
-              useSafetyGuidelines: true,
-            }),
-          },
-          API_TIMEOUTS.GROK_ANALYSIS
-        );
-
-        if (!analyzeResponse.ok) {
-          console.error('Failed to regenerate prompt');
-          throw new Error('Failed to regenerate safe prompt');
-        }
-
-        const { imagePrompt: safePrompt } = await analyzeResponse.json();
-        console.log('Regenerated safe prompt:', safePrompt);
-
-        // Retry with the new, safer prompt
-        return attemptImageGeneration(safePrompt, true);
+        return await regenerateWithSaferPrompt(handle);
       }
 
       if (!imageResult || !('url' in imageResult)) {
@@ -159,6 +141,36 @@ export async function POST(req: NextRequest) {
 
       console.log('Image generated successfully');
       return imageResult.url;
+    };
+
+    // Helper function to regenerate with safer prompt
+    const regenerateWithSaferPrompt = async (accountHandle: string): Promise<string> => {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const analyzeResponse = await fetchWithTimeout(
+        `${baseUrl}/api/analyze-account`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            handle: accountHandle,
+            useSafetyGuidelines: true,
+          }),
+        },
+        API_TIMEOUTS.GROK_ANALYSIS
+      );
+
+      if (!analyzeResponse.ok) {
+        console.error('Failed to regenerate prompt');
+        throw new Error('Failed to regenerate safe prompt');
+      }
+
+      const { imagePrompt: safePrompt } = await analyzeResponse.json();
+      console.log('Regenerated safe prompt:', safePrompt);
+
+      // Retry with the new, safer prompt
+      return attemptImageGeneration(safePrompt, true);
     };
 
     // Generate image

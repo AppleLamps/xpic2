@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import {
   GeminiImageResponseSchema,
+  GrokResponseSchema,
   extractGeminiImage,
+  extractGrokContent,
   getCorsHeaders,
 } from '@/lib/schemas';
 
@@ -24,6 +26,75 @@ SCENE TO ILLUSTRATE:
 ${basePrompt}
 
 Remember: NO MISSPELLINGS in any text. When in doubt, use visual symbols instead of words.`;
+};
+
+// Generate a safer prompt using Grok directly (avoids self-referential API call issues in serverless)
+const generateSaferPromptWithGrok = async (handle: string, originalPrompt: string): Promise<string> => {
+  const xaiApiKey = process.env.XAI_API_KEY;
+  if (!xaiApiKey) {
+    throw new Error('XAI_API_KEY is not configured for safety rewrite');
+  }
+
+  console.log(`Generating safer prompt for @${handle} using Grok`);
+
+  const safetySystemPrompt = `You are an expert at rewriting image generation prompts to be safer while maintaining their essence and humor.
+
+Your task: Take the original prompt and rewrite it to avoid content that might trigger AI image safety filters, while still capturing the same spirit, personality, and satirical nature.
+
+Guidelines for safer prompts:
+- **Use Visual Metaphors:** Replace any potentially controversial elements with symbolic representations
+- **Avoid Political Figures Directly:** Instead of depicting specific politicians, use symbolic representations (e.g., "a figure representing conservative values" → "an elephant mascot in a suit")
+- **No Violence or Weapons:** Replace with harmless cartoon alternatives (e.g., "wielding a sword" → "wielding an oversized foam finger")
+- **Abstract Controversial Topics:** Use visual symbolism rather than explicit depictions
+- **Keep the Humor:** The satire should still be evident through clever visual choices
+- **Maintain the Art Style:** Keep the MAD Magazine / satirical cartoon aesthetic
+
+Output ONLY the rewritten prompt. No explanations, no preamble.`;
+
+  const response = await fetchWithTimeout(
+    'https://api.x.ai/v1/chat/completions',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${xaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'grok-3-fast',
+        messages: [
+          { role: 'system', content: safetySystemPrompt },
+          {
+            role: 'user',
+            content: `Original prompt that was blocked by safety filters:\n\n"${originalPrompt}"\n\nRewrite this to be safer while keeping the satirical spirit and visual humor for @${handle}'s account.`,
+          },
+        ],
+      }),
+    },
+    API_TIMEOUTS.GROK_ANALYSIS
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('xAI API error for safety rewrite:', response.status, errorText);
+    throw new Error(`Failed to generate safer prompt: ${response.status}`);
+  }
+
+  const rawData = await response.json();
+  const validationResult = GrokResponseSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    console.error('Invalid Grok response for safety rewrite:', validationResult.error);
+    throw new Error('Invalid response from Grok API');
+  }
+
+  const saferPrompt = extractGrokContent(validationResult.data);
+  if (!saferPrompt) {
+    throw new Error('No content in Grok safety rewrite response');
+  }
+
+  console.log('Generated safer prompt:', saferPrompt);
+  return saferPrompt;
+};
 };
 
 export async function OPTIONS() {
@@ -115,7 +186,8 @@ export async function POST(req: NextRequest) {
         // Treat validation failure as potential safety block - retry with safer prompt
         if (!isRetry) {
           console.log('Validation failed (likely safety filter) - regenerating prompt with safety guidelines');
-          return await regenerateWithSaferPrompt(handle);
+          const saferPrompt = await generateSaferPromptWithGrok(handle, currentPrompt);
+          return attemptImageGeneration(saferPrompt, true);
         }
 
         throw new Error('Invalid response from Gemini API - content may be restricted');
@@ -131,7 +203,8 @@ export async function POST(req: NextRequest) {
         }
 
         console.log('Safety block detected - regenerating prompt with safety guidelines');
-        return await regenerateWithSaferPrompt(handle);
+        const saferPrompt = await generateSaferPromptWithGrok(handle, currentPrompt);
+        return attemptImageGeneration(saferPrompt, true);
       }
 
       if (!imageResult || !('url' in imageResult)) {
@@ -141,36 +214,6 @@ export async function POST(req: NextRequest) {
 
       console.log('Image generated successfully');
       return imageResult.url;
-    };
-
-    // Helper function to regenerate with safer prompt
-    const regenerateWithSaferPrompt = async (accountHandle: string): Promise<string> => {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const analyzeResponse = await fetchWithTimeout(
-        `${baseUrl}/api/analyze-account`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            handle: accountHandle,
-            useSafetyGuidelines: true,
-          }),
-        },
-        API_TIMEOUTS.GROK_ANALYSIS
-      );
-
-      if (!analyzeResponse.ok) {
-        console.error('Failed to regenerate prompt');
-        throw new Error('Failed to regenerate safe prompt');
-      }
-
-      const { imagePrompt: safePrompt } = await analyzeResponse.json();
-      console.log('Regenerated safe prompt:', safePrompt);
-
-      // Retry with the new, safer prompt
-      return attemptImageGeneration(safePrompt, true);
     };
 
     // Generate image

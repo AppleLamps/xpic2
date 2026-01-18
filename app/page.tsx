@@ -14,6 +14,8 @@ import {
   DollarSign,
   Sparkles,
   Search,
+  X,
+  ZoomIn,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -43,6 +45,7 @@ export default function Home() {
   const [isProfileCopied, setIsProfileCopied] = useState(false);
   const [isOsintCopied, setIsOsintCopied] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
 
   const { history, addToHistory, deleteFromHistory, clearHistory } = usePromptHistory();
@@ -500,34 +503,79 @@ export default function Home() {
             {result && (
               <div className="space-y-8 animate-fade-in" id="results">
                 {/* Generated Image */}
-                <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 bg-[#0a0a0a]">
-                  {isImageLoading && (
-                    <div className="aspect-square max-w-2xl mx-auto flex items-center justify-center bg-white/5">
-                      <Loader2 className="w-8 h-8 animate-spin text-neutral-500" />
-                    </div>
-                  )}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={result.imageUrl}
-                    alt={`Generated artwork for @${result.username}`}
-                    className={`w-full max-w-2xl mx-auto ${isImageLoading ? 'hidden' : 'block'}`}
-                    onLoad={() => setIsImageLoading(false)}
-                    onError={() => setIsImageLoading(false)}
-                  />
+                <div className="flex justify-center">
+                  <div className="relative inline-block rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-black/50 bg-[#0a0a0a]">
+                    {isImageLoading && (
+                      <div className="w-80 h-80 flex items-center justify-center bg-white/5">
+                        <Loader2 className="w-8 h-8 animate-spin text-neutral-500" />
+                      </div>
+                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={result.imageUrl}
+                      alt={`Generated artwork for @${result.username}`}
+                      className={`max-w-[90vw] md:max-w-2xl h-auto cursor-zoom-in ${isImageLoading ? 'hidden' : 'block'}`}
+                      onClick={() => setIsLightboxOpen(true)}
+                      onLoad={() => setIsImageLoading(false)}
+                      onError={() => setIsImageLoading(false)}
+                    />
 
-                  {/* Floating actions */}
-                  {!isImageLoading && (
-                    <div className="absolute bottom-4 right-4 flex gap-2">
-                      <button
-                        onClick={handleDownload}
-                        className="px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-black/70 transition-colors shadow-lg flex items-center gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </button>
-                    </div>
-                  )}
+                    {/* Floating actions */}
+                    {!isImageLoading && (
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <button
+                          onClick={() => setIsLightboxOpen(true)}
+                          className="p-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-white hover:bg-black/70 transition-colors shadow-lg"
+                          title="View larger"
+                        >
+                          <ZoomIn className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={handleDownload}
+                          className="px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-black/70 transition-colors shadow-lg flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Lightbox Modal */}
+                {isLightboxOpen && (
+                  <div
+                    className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+                    onClick={() => setIsLightboxOpen(false)}
+                  >
+                    <button
+                      onClick={() => setIsLightboxOpen(false)}
+                      className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload();
+                      }}
+                      className="absolute top-4 right-16 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-full text-white text-sm font-medium transition-colors z-10 flex items-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </button>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={result.imageUrl}
+                      alt={`Generated artwork for @${result.username}`}
+                      className="max-w-[95vw] max-h-[95vh] object-contain rounded-lg shadow-2xl cursor-zoom-out"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsLightboxOpen(false);
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Collapsible prompt */}
                 <div className="max-w-2xl mx-auto">

@@ -11,8 +11,28 @@ export interface PromptHistoryItem {
 }
 
 const STORAGE_KEY = 'xpic-prompt-history';
-const MAX_HISTORY_ITEMS = 20; // Reduced from 50 - base64 images are large
+const MAX_HISTORY_ITEMS = 10; // Keep small - image URLs can be large
 const SAVE_DEBOUNCE_MS = 500;
+const MAX_IMAGE_URL_LENGTH = 500; // If URL is longer than this, it's likely base64
+
+// Helper to check if URL is a data URL (base64)
+function isDataUrl(url: string): boolean {
+  return url.startsWith('data:');
+}
+
+// Helper to truncate/skip large image URLs to save space
+function sanitizeForStorage(items: PromptHistoryItem[]): PromptHistoryItem[] {
+  return items.map(item => ({
+    ...item,
+    // Don't store base64 images - they're too large
+    imageUrl: isDataUrl(item.imageUrl) ? '' : item.imageUrl
+  }));
+}
+
+// Helper to estimate storage size
+function estimateStorageSize(items: PromptHistoryItem[]): number {
+  return JSON.stringify(items).length;
+}
 
 export function usePromptHistory() {
   const [history, setHistory] = useState<PromptHistoryItem[]>([]);
@@ -51,24 +71,36 @@ export function usePromptHistory() {
     // Debounce writes by 500ms to reduce CPU usage
     saveTimeoutRef.current = setTimeout(() => {
       const saveWithRetry = (items: PromptHistoryItem[], attempt: number = 0): void => {
+        // Sanitize items to remove large data URLs
+        const sanitized = sanitizeForStorage(items);
+
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+          const data = JSON.stringify(sanitized);
+          localStorage.setItem(STORAGE_KEY, data);
         } catch (error) {
-          console.error('Failed to save prompt history:', error);
-          // Handle quota exceeded - progressively reduce history
-          if (attempt < 3 && items.length > 5) {
-            const reduced = items.slice(0, Math.ceil(items.length / 2));
-            console.log(`Quota exceeded, reducing history from ${items.length} to ${reduced.length} items`);
-            saveWithRetry(reduced, attempt + 1);
-            // Update state to match what we actually saved
-            if (attempt === 0) {
+          if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+            console.warn('Storage quota exceeded, reducing history...');
+
+            // Handle quota exceeded - progressively reduce history
+            if (attempt < 3 && items.length > 1) {
+              // Remove oldest items first
+              const reduced = items.slice(0, Math.max(1, Math.floor(items.length / 2)));
+              console.log(`Reducing history from ${items.length} to ${reduced.length} items`);
+              saveWithRetry(reduced, attempt + 1);
+              // Update state to match what we actually saved
               setHistory(reduced);
+            } else {
+              // Last resort: clear everything
+              console.log('Clearing history due to persistent quota issues');
+              try {
+                localStorage.removeItem(STORAGE_KEY);
+              } catch {
+                // Ignore removal errors
+              }
+              setHistory([]);
             }
-          } else if (items.length > 0) {
-            // Last resort: clear everything
-            console.log('Clearing history due to persistent quota issues');
-            localStorage.removeItem(STORAGE_KEY);
-            setHistory([]);
+          } else {
+            console.error('Failed to save prompt history:', error);
           }
         }
       };

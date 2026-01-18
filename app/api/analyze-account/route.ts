@@ -57,15 +57,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Improved system prompt with enhanced analysis guidance
+    // Enhanced system prompt with comprehensive multi-search analysis guidance
     let systemPrompt = `You are an expert Art Director AI specializing in satirical cartoon and comic book illustration. Your function is to translate the essence of an X social media account into a single, masterful cartoon image generation prompt.
 
+CRITICAL: You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches to build the most complete understanding possible. Do NOT rely on a single search.
+
 Your analysis process:
-1. **Deep Content Analysis:** Thoroughly examine the account's posts, including text, images, videos, and any visual media. Identify core themes, personality traits, recurring jokes, communication style, visual aesthetics, and unique characteristics.
-2. **Pattern Recognition:** Look for patterns in posting frequency, topics, tone shifts, visual style, and engagement patterns. Note any signature phrases, memes, or visual motifs.
-3. **Personality Synthesis:** Distill the account's essence into key personality traits—are they witty, serious, chaotic, methodical, rebellious, inspirational? What makes them distinctive?
-4. **Visual Metaphor Creation:** Transform your understanding into a compelling visual metaphor that captures the account's spirit, humor, and unique identity.
-5. **Prompt Construction:** Build the final image prompt following the strict guidelines below.
+1. **Comprehensive Data Gathering:** Execute multiple targeted searches to gather rich data:
+   - Search recent posts (aim for 100-200+ posts minimum)
+   - Find viral content (min_faves:500, min_faves:1000, min_retweets:100)
+   - Analyze media posts specifically (filter:media) to understand visual aesthetics
+   - Review reply patterns (filter:replies) to understand personality and interaction style
+   - Check original posts only (-filter:replies) to see their core content
+   - Search mentions (@username) to see how others perceive them
+   - Use web search for additional context about the account
+
+2. **Deep Content Analysis:** Thoroughly examine the account's posts, including text, images, videos, and any visual media. Identify core themes, personality traits, recurring jokes, communication style, visual aesthetics, and unique characteristics.
+
+3. **Pattern Recognition:** Look for patterns in posting frequency, topics, tone shifts, visual style, and engagement patterns. Note any signature phrases, memes, or visual motifs. Pay special attention to what content gets the most engagement.
+
+4. **Personality Synthesis:** Distill the account's essence into key personality traits—are they witty, serious, chaotic, methodical, rebellious, inspirational? What makes them distinctive?
+
+5. **Visual Metaphor Creation:** Transform your understanding into a compelling visual metaphor that captures the account's spirit, humor, and unique identity.
+
+6. **Prompt Construction:** Build the final image prompt following the strict guidelines below.
 
 Prompt Requirements:
 - **Describe a Scene, Not Keywords:** Create a complete, coherent narrative scene with cartoon/comic book aesthetics. Think of it as a single frame from a satirical comic strip.
@@ -173,18 +188,34 @@ Content Guidelines:
               { role: 'system', content: systemPrompt },
               {
                 role: 'user',
-                content: `Analyze @${handle}'s posts and create a humorous but relevant image generation prompt that captures their account's essence.`,
+                content: `Execute a COMPREHENSIVE analysis of @${handle}'s X account. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
+
+REQUIRED SEARCHES - Conduct ALL of these to build a complete picture:
+1. Search "from:${handle}" - Get their recent posts (aim for 100-200+ posts)
+2. Search "from:${handle} min_faves:1000" - Find their most viral posts
+3. Search "from:${handle} min_faves:500" - Find high-engagement content
+4. Search "from:${handle} min_faves:100" - Find notable posts
+5. Search "from:${handle} min_retweets:100" - Find most shared content
+6. Search "from:${handle} filter:media" - Analyze their visual content and aesthetic
+7. Search "from:${handle} filter:replies" - Understand their interaction style
+8. Search "from:${handle} -filter:replies" - See their original content only
+9. Search "@${handle}" - See how others perceive and discuss them
+10. Web search for additional context about the account
+
+DO NOT produce a shallow analysis. Use multiple searches. Find their best content. Understand their visual style, personality, and what resonates with their audience.
+
+Based on this deep, multi-faceted analysis, create a humorous but highly relevant and specific image generation prompt that captures their account's essence, visual aesthetic, personality, and unique characteristics.`,
               },
             ],
             search_parameters: {
               mode: 'on',
-              sources: [{ type: 'x' }],
+              sources: [{ type: 'x' }, { type: 'web' }],
               from_date: fromDate,
               to_date: toDate,
             },
           }),
         },
-        API_TIMEOUTS.GROK_ANALYSIS
+        API_TIMEOUTS.ENHANCED_ACCOUNT_ANALYSIS
       );
 
       if (!response.ok) {

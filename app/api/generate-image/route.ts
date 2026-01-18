@@ -95,7 +95,6 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
   console.log('Generated safer prompt:', saferPrompt);
   return saferPrompt;
 };
-};
 
 export async function OPTIONS() {
   return NextResponse.json(null, { headers: getCorsHeaders() });

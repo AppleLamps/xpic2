@@ -11,8 +11,8 @@ import {
 } from '@/lib/schemas';
 
 // Premium image model (easy to change back if needed)
-// Supported Google models: "google/gemini-2.5-flash-image", "google/gemini-3-pro-image-preview"
-const PREMIUM_IMAGE_MODEL = 'google/gemini-2.5-flash-image';
+// Supported Google models: "google/gemini-3-pro-image-preview", "google/gemini-3-pro-image-preview"
+const PREMIUM_IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
 
 // Check if the current model is a Google model (for prompt enhancement)
 const isGoogleModel = (model: string): boolean => model.startsWith('google/');

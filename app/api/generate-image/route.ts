@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
           headers: {
             Authorization: `Bearer ${openrouterApiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://x-image-generator.vercel.app',
+            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://xpressionist.vercel.app',
             'X-Title': 'X Account Image Generator',
           },
           body: JSON.stringify({

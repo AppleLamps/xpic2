@@ -24,6 +24,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { PromptHistorySidebar } from '@/components/PromptHistorySidebar';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
+import { ShareButton } from '@/components/ShareButton';
 
 const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'OfficialLoganK'];
 
@@ -539,6 +540,12 @@ export default function Home() {
                         >
                           <ZoomIn className="w-4 h-4" />
                         </button>
+                        <ShareButton
+                          imageUrl={result.imageUrl}
+                          username={result.username}
+                          className="bg-black/50 backdrop-blur-md border-white/10 hover:bg-black/70 shadow-lg text-sm py-2"
+                          variant="secondary"
+                        />
                         <button
                           onClick={handleDownload}
                           className="px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-black/70 transition-colors shadow-lg flex items-center gap-2"

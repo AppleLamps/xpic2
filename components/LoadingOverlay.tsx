@@ -102,11 +102,13 @@ export function LoadingOverlay({ type, stage, username }: LoadingOverlayProps) {
     return () => clearInterval(timer);
   }, []);
 
-  // Reset elapsed time when stage changes
+  // Reset elapsed time and message index when stage changes
   useEffect(() => {
     if (type === 'photo' && stage === 'image') {
       setElapsedSeconds(0);
     }
+    // Reset message index when messages change to avoid out-of-bounds
+    setMessageIndex(0);
   }, [stage, type]);
 
   // Cycle through messages
@@ -117,7 +119,8 @@ export function LoadingOverlay({ type, stage, username }: LoadingOverlayProps) {
     return () => clearInterval(interval);
   }, [messages.length]);
 
-  const currentMessage = messages[messageIndex];
+  // Safely get current message with fallback
+  const currentMessage = messages[messageIndex] || messages[0];
   const IconComponent = currentMessage.icon;
 
   // Get step info for photo type

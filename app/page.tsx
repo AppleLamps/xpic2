@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { PromptHistorySidebar } from '@/components/PromptHistorySidebar';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
+import { LoadingOverlay } from '@/components/LoadingOverlay';
 
 const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'OfficialLoganK'];
 
@@ -34,6 +35,7 @@ export default function Home() {
   const [inputError, setInputError] = useState('');
   const [globalError, setGlobalError] = useState('');
   const [loadingStage, setLoadingStage] = useState<'analyze' | 'image' | null>(null);
+  const [loadingUsername, setLoadingUsername] = useState<string | null>(null);
   const [result, setResult] = useState<{ imagePrompt: string; imageUrl: string; username: string } | null>(null);
   const [roast, setRoast] = useState<string | null>(null);
   const [fbiProfile, setFbiProfile] = useState<string | null>(null);
@@ -66,6 +68,7 @@ export default function Home() {
     setFbiProfile(null);
     setOsintReport(null);
     setLoadingStage('analyze');
+    setLoadingUsername(normalizedHandle);
 
     try {
       const analysisResponse = await fetch('/api/analyze-account', {
@@ -113,6 +116,7 @@ export default function Home() {
       toast.error(message);
     } finally {
       setLoadingStage(null);
+      setLoadingUsername(null);
       setIsLoading(false);
     }
   };
@@ -149,6 +153,7 @@ export default function Home() {
     setInputError('');
     setGlobalError('');
     setRoast(null);
+    setLoadingUsername(normalizedHandle);
 
     try {
       const response = await fetch('/api/roast-account', {
@@ -169,6 +174,7 @@ export default function Home() {
       setGlobalError(message);
       toast.error(message);
     } finally {
+      setLoadingUsername(null);
       setIsRoasting(false);
     }
   };
@@ -185,6 +191,7 @@ export default function Home() {
     setInputError('');
     setGlobalError('');
     setFbiProfile(null);
+    setLoadingUsername(normalizedHandle);
 
     try {
       const response = await fetch('/api/fbi-profile', {
@@ -205,6 +212,7 @@ export default function Home() {
       setGlobalError(message);
       toast.error(message);
     } finally {
+      setLoadingUsername(null);
       setIsProfiling(false);
     }
   };
@@ -221,6 +229,7 @@ export default function Home() {
     setInputError('');
     setGlobalError('');
     setOsintReport(null);
+    setLoadingUsername(normalizedHandle);
 
     try {
       const response = await fetch('/api/osint-profile', {
@@ -241,6 +250,7 @@ export default function Home() {
       setGlobalError(message);
       toast.error(message);
     } finally {
+      setLoadingUsername(null);
       setIsOsintProfiling(false);
     }
   };
@@ -275,22 +285,21 @@ export default function Home() {
         </div>
 
         {/* Full-page loading overlay */}
-        {(isLoading || isRoasting || isProfiling || isOsintProfiling) && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center">
-            <div className="text-center space-y-6">
-              <div className="w-16 h-16 border-4 border-white/20 border-t-[#ff4d4d] rounded-full animate-spin mx-auto" />
-              <div>
-                <p className="text-2xl font-semibold text-white">
-                  {isLoading && loadingStage === 'analyze' && 'Reading the vibes...'}
-                  {isLoading && loadingStage === 'image' && 'Painting your portrait...'}
-                  {isRoasting && 'Crafting your roast...'}
-                  {isProfiling && 'Analyzing behavior patterns...'}
-                  {isOsintProfiling && 'Compiling intelligence dossier...'}
-                </p>
-                <p className="text-neutral-400 mt-2">This takes about 10 seconds</p>
-              </div>
-            </div>
-          </div>
+        {isLoading && (
+          <LoadingOverlay
+            type="photo"
+            stage={loadingStage || 'analyze'}
+            username={loadingUsername || undefined}
+          />
+        )}
+        {isRoasting && (
+          <LoadingOverlay type="roast" username={loadingUsername || undefined} />
+        )}
+        {isProfiling && (
+          <LoadingOverlay type="fbi" username={loadingUsername || undefined} />
+        )}
+        {isOsintProfiling && (
+          <LoadingOverlay type="osint" username={loadingUsername || undefined} />
         )}
 
         <main className="relative z-10 min-h-screen px-6 lg:px-12 py-16 lg:py-24 flex flex-col justify-center">

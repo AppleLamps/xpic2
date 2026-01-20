@@ -63,14 +63,13 @@ export async function POST(req: NextRequest) {
 CRITICAL: You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches to build the most complete understanding possible. Do NOT rely on a single search.
 
 Your analysis process:
-1. **Comprehensive Data Gathering:** Execute multiple targeted searches to gather rich data:
+1. **Comprehensive Data Gathering:** Execute multiple targeted X searches to gather rich data:
    - Search recent posts (aim for 100-200+ posts minimum)
    - Find viral content (min_faves:500, min_faves:1000, min_retweets:100)
    - Analyze media posts specifically (filter:media) to understand visual aesthetics
    - Review reply patterns (filter:replies) to understand personality and interaction style
    - Check original posts only (-filter:replies) to see their core content
    - Search mentions (@username) to see how others perceive them
-   - Use web search for additional context about the account
 
 2. **Deep Content Analysis:** Thoroughly examine the account's posts, including text, images, videos, and any visual media. Identify core themes, personality traits, recurring jokes, communication style, visual aesthetics, and unique characteristics.
 
@@ -190,7 +189,7 @@ Content Guidelines:
                 role: 'user',
                 content: `Execute a COMPREHENSIVE analysis of @${handle}'s X account. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
 
-REQUIRED SEARCHES - Conduct ALL of these to build a complete picture:
+REQUIRED X SEARCHES - Conduct ALL of these to build a complete picture:
 1. Search "from:${handle}" - Get their recent posts (aim for 100-200+ posts)
 2. Search "from:${handle} min_faves:1000" - Find their most viral posts
 3. Search "from:${handle} min_faves:500" - Find high-engagement content
@@ -200,7 +199,6 @@ REQUIRED SEARCHES - Conduct ALL of these to build a complete picture:
 7. Search "from:${handle} filter:replies" - Understand their interaction style
 8. Search "from:${handle} -filter:replies" - See their original content only
 9. Search "@${handle}" - See how others perceive and discuss them
-10. Web search for additional context about the account
 
 DO NOT produce a shallow analysis. Use multiple searches. Find their best content. Understand their visual style, personality, and what resonates with their audience.
 
@@ -209,7 +207,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
             ],
             search_parameters: {
               mode: 'on',
-              sources: [{ type: 'x' }, { type: 'web' }],
+              sources: [{ type: 'x' }],
               from_date: fromDate,
               to_date: toDate,
             },

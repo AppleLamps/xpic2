@@ -84,7 +84,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       site: '@xpressionist',
-      images: [imageData.url],
+      images: [{
+        url: imageData.url,
+        width: 1024,
+        height: 1024,
+        alt: title,
+      }],
+    },
+    other: {
+      'twitter:image': imageData.url,
+      'twitter:image:width': '1024',
+      'twitter:image:height': '1024',
     },
   };
 }

@@ -63,13 +63,15 @@ export async function POST(req: NextRequest) {
 CRITICAL: You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches to build the most complete understanding possible. Do NOT rely on a single search.
 
 Your analysis process:
-1. **Comprehensive Data Gathering:** Execute multiple targeted X searches to gather rich data:
-   - Search recent posts (aim for 100-200+ posts minimum)
-   - Find viral content (min_faves:500, min_faves:1000, min_retweets:100)
+1. **Adaptive Data Gathering:** Execute targeted X searches, adapting to the account's activity level:
+   - Search recent posts first to gauge their activity level
+   - Find their best content using PROGRESSIVE thresholds - start with high minimums (min_faves:1000) and lower them (500→100→50→25→10→5→none) until you find their relatively best posts
+   - For smaller accounts with low engagement, their "best" post might only have 5-10 likes - that's fine! Adjust your expectations.
    - Analyze media posts specifically (filter:media) to understand visual aesthetics
    - Review reply patterns (filter:replies) to understand personality and interaction style
    - Check original posts only (-filter:replies) to see their core content
    - Search mentions (@username) to see how others perceive them
+   - IMPORTANT: Even accounts with few posts have distinct personalities. Work with whatever content is available.
 
 2. **Deep Content Analysis:** Thoroughly examine the account's posts, including text, images, videos, and any visual media. Identify core themes, personality traits, recurring jokes, communication style, visual aesthetics, and unique characteristics.
 
@@ -189,18 +191,40 @@ Content Guidelines:
                 role: 'user',
                 content: `Execute a COMPREHENSIVE analysis of @${handle}'s X account. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
 
-REQUIRED X SEARCHES - Conduct ALL of these to build a complete picture:
-1. Search "from:${handle}" - Get their recent posts (aim for 100-200+ posts)
-2. Search "from:${handle} min_faves:1000" - Find their most viral posts
-3. Search "from:${handle} min_faves:500" - Find high-engagement content
-4. Search "from:${handle} min_faves:100" - Find notable posts
-5. Search "from:${handle} min_retweets:100" - Find most shared content
-6. Search "from:${handle} filter:media" - Analyze their visual content and aesthetic
-7. Search "from:${handle} filter:replies" - Understand their interaction style
-8. Search "from:${handle} -filter:replies" - See their original content only
-9. Search "@${handle}" - See how others perceive and discuss them
+REQUIRED X SEARCHES - Use an ADAPTIVE approach based on account activity level:
 
-DO NOT produce a shallow analysis. Use multiple searches. Find their best content. Understand their visual style, personality, and what resonates with their audience.
+**Step 1: Get baseline content**
+- Search "from:${handle}" - Get their recent posts first to understand their activity level
+
+**Step 2: Find their best content using PROGRESSIVE thresholds**
+For engagement searches, start high and work down until you find results:
+- Try "from:${handle} min_faves:1000" first
+- If no/few results, try "from:${handle} min_faves:500"
+- If still sparse, try "from:${handle} min_faves:100"
+- If still sparse, try "from:${handle} min_faves:50"
+- If still sparse, try "from:${handle} min_faves:25"
+- If still sparse, try "from:${handle} min_faves:10"
+- If still sparse, try "from:${handle} min_faves:5"
+- As a last resort, use "from:${handle}" without any minimum
+
+Same approach for retweets:
+- Start with "from:${handle} min_retweets:100"
+- Then try min_retweets:50, min_retweets:25, min_retweets:10, min_retweets:5
+- Stop once you find their relatively most-shared content
+
+**Step 3: Content type analysis**
+- Search "from:${handle} filter:media" - Analyze their visual content and aesthetic
+- Search "from:${handle} filter:replies" - Understand their interaction style
+- Search "from:${handle} -filter:replies" - See their original content only
+- Search "@${handle}" - See how others perceive and discuss them
+
+**IMPORTANT FOR LOW-ACTIVITY ACCOUNTS:**
+- If this is a smaller account with few posts, that's OK! Use whatever content is available.
+- Even accounts with just a few posts have personalities worth capturing.
+- Focus on themes, tone, topics, and style rather than raw engagement numbers.
+- A single thoughtful post can reveal more than 100 viral ones.
+
+DO NOT produce a shallow analysis. Adapt your search strategy to the account's activity level. Find their best content relative to THEIR baseline. Understand their visual style, personality, and what resonates with their audience.
 
 Based on this deep, multi-faceted analysis, create a humorous but highly relevant and specific image generation prompt that captures their account's essence, visual aesthetic, personality, and unique characteristics.`,
               },

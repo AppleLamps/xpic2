@@ -11,9 +11,34 @@ import {
 // Image model
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
 
-// Enhanced prompt wrapper - reinforces satirical cartoon style and prevents text misspellings
-const enhancePrompt = (basePrompt: string): string => {
-  return `Create a satirical cartoon illustration in the style of MAD Magazine with bold outlines, vibrant colors, and exaggerated expressions.
+// Style prompt templates for different art styles
+const STYLE_PROMPTS: Record<string, string> = {
+  default: `Create a satirical cartoon illustration in the style of MAD Magazine with bold outlines, vibrant colors, and exaggerated expressions.`,
+  
+  ghibli: `Create a beautiful illustration in the style of Studio Ghibli anime, with soft pastel colors, whimsical fantasy elements, dreamy atmosphere, gentle lighting, and the signature warm, nostalgic feeling of Hayao Miyazaki's films.`,
+  
+  pixar: `Create a 3D animated illustration in the style of Pixar movies, with expressive characters, vibrant saturated colors, smooth rendering, dynamic lighting, and that signature Pixar charm and warmth.`,
+  
+  anime: `Create a dynamic anime-style illustration with bold lines, expressive eyes, dramatic poses, vibrant colors, speed lines, and the energetic aesthetic of popular Japanese anime series.`,
+  
+  comic: `Create a bold comic book style illustration with thick black outlines, halftone dots, dynamic panel-like composition, dramatic shadows, action lines, and speech bubble-ready aesthetic like classic Marvel or DC comics.`,
+  
+  watercolor: `Create a soft, dreamy watercolor painting illustration with flowing colors, gentle gradients, organic brush strokes, subtle color bleeding, and the delicate, artistic quality of traditional watercolor art.`,
+  
+  oil: `Create a classical oil painting style illustration with rich textures, visible brushstrokes, dramatic chiaroscuro lighting, deep saturated colors, and the timeless elegance of Renaissance masters.`,
+  
+  cyberpunk: `Create a cyberpunk style illustration with neon lights, futuristic technology, dark urban atmosphere, holographic elements, rain-slicked streets, vibrant pink and cyan color palette, and dystopian sci-fi aesthetic.`,
+  
+  retro: `Create a retro pop art style illustration inspired by 80s and 90s aesthetics, with bold geometric shapes, neon colors, pixel art elements, synthwave vibes, VHS grain, and nostalgic vintage feel.`,
+  
+  minimalist: `Create a clean minimalist illustration with simple geometric shapes, limited color palette, lots of white space, flat design elements, and modern elegant simplicity.`,
+};
+
+// Enhanced prompt wrapper - incorporates style and prevents text misspellings
+const enhancePrompt = (basePrompt: string, style: string = 'default'): string => {
+  const stylePrompt = STYLE_PROMPTS[style] || STYLE_PROMPTS.default;
+  
+  return `${stylePrompt}
 
 CRITICAL TEXT RENDERING RULES:
 - If any text, labels, signs, or words appear in the image, spell them EXACTLY and CORRECTLY
@@ -104,7 +129,7 @@ export async function POST(req: NextRequest) {
   const corsHeaders = getCorsHeaders();
 
   try {
-    const { prompt, handle } = await req.json();
+    const { prompt, handle, style } = await req.json();
 
     // Validate X handle format (1-15 alphanumeric characters + underscores)
     const HANDLE_REGEX = /^[a-zA-Z0-9_]{1,15}$/;
@@ -124,6 +149,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Validate style (optional, defaults to 'default')
+    const validStyles = Object.keys(STYLE_PROMPTS);
+    const selectedStyle = style && validStyles.includes(style) ? style : 'default';
+    console.log(`Using art style: ${selectedStyle}`);
+
     const openrouterApiKey = process.env.OPENROUTER_API_KEY;
     if (!openrouterApiKey) {
       console.error('OPENROUTER_API_KEY is not configured');
@@ -138,7 +168,7 @@ export async function POST(req: NextRequest) {
       console.log(`Attempting image generation (retry: ${isRetry})`);
       console.log(`Using model (OpenRouter): ${IMAGE_MODEL}`);
 
-      const finalPrompt = enhancePrompt(currentPrompt);
+      const finalPrompt = enhancePrompt(currentPrompt, selectedStyle);
 
       if (process.env.NODE_ENV !== 'production') {
         console.log('Enhanced prompt:', finalPrompt);

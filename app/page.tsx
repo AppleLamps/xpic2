@@ -16,6 +16,7 @@ import {
   Search,
   X,
   ZoomIn,
+  Palette,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -28,8 +29,30 @@ import { ShareButton } from '@/components/ShareButton';
 
 const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'OfficialLoganK'];
 
+// Art style options for image generation
+export type ArtStyle = {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+};
+
+export const ART_STYLES: ArtStyle[] = [
+  { id: 'default', name: 'MAD Magazine', emoji: '🎨', description: 'Bold satirical cartoon style' },
+  { id: 'ghibli', name: 'Studio Ghibli', emoji: '🌸', description: 'Whimsical anime fantasy style' },
+  { id: 'pixar', name: 'Pixar 3D', emoji: '🎬', description: '3D animated movie style' },
+  { id: 'anime', name: 'Anime', emoji: '⚡', description: 'Japanese anime style' },
+  { id: 'comic', name: 'Comic Book', emoji: '💥', description: 'Bold comic book panels' },
+  { id: 'watercolor', name: 'Watercolor', emoji: '🖌️', description: 'Soft watercolor painting' },
+  { id: 'oil', name: 'Oil Painting', emoji: '🎭', description: 'Classical oil painting style' },
+  { id: 'cyberpunk', name: 'Cyberpunk', emoji: '🤖', description: 'Neon-lit futuristic style' },
+  { id: 'retro', name: 'Retro Pop Art', emoji: '🕹️', description: '80s/90s pop art style' },
+  { id: 'minimalist', name: 'Minimalist', emoji: '⬜', description: 'Clean minimal illustration' },
+];
+
 export default function Home() {
   const [handle, setHandle] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState<string>('default');
   const [isLoading, setIsLoading] = useState(false);
   const [isRoasting, setIsRoasting] = useState(false);
   const [isProfiling, setIsProfiling] = useState(false);
@@ -89,6 +112,7 @@ export default function Home() {
         body: JSON.stringify({
           prompt: analysisData.imagePrompt,
           handle: normalizedHandle,
+          style: selectedStyle,
         }),
       });
 
@@ -430,6 +454,26 @@ export default function Home() {
                             >
                               <ChevronDown className="-rotate-90 w-4 h-4" />
                             </button>
+                          </div>
+
+                          {/* Style Selector */}
+                          <div className="relative">
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-neutral-400 pointer-events-none">
+                              <Palette className="w-4 h-4" />
+                            </div>
+                            <select
+                              value={selectedStyle}
+                              onChange={(e) => setSelectedStyle(e.target.value)}
+                              disabled={isBusy}
+                              className="w-full pl-10 pr-10 py-3 text-sm bg-white/[0.08] border border-white/[0.12] rounded-2xl text-white appearance-none cursor-pointer focus:outline-none focus:bg-white/[0.12] focus:border-rose-500/50 transition-all"
+                            >
+                              {ART_STYLES.map((style) => (
+                                <option key={style.id} value={style.id} className="bg-neutral-900 text-white">
+                                  {style.emoji} {style.name}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
                           </div>
 
                           <div className="space-y-2.5">

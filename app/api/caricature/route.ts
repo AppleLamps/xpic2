@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
                 headers: {
                     Authorization: `Bearer ${openrouterApiKey}`,
                     'Content-Type': 'application/json',
-                    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://xpressionist.vercel.app',
+                    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://www.grokify.ai',
                     'X-Title': 'X-pressionist Caricature Generator',
                 },
                 body: JSON.stringify({

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Sparkles, Download } from 'lucide-react';
 
-const SITE_URL = 'https://xpressionist.vercel.app';
+const SITE_URL = 'https://www.grokify.ai';
 
 interface PageProps {
   params: Promise<{ id: string }>;

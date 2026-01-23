@@ -17,6 +17,8 @@ import {
   X,
   ZoomIn,
   Palette,
+  Pencil,
+  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -73,6 +75,16 @@ export default function Home() {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+
+  // Caricature feature state
+  const [isCaricatureModalOpen, setIsCaricatureModalOpen] = useState(false);
+  const [isCaricatureLoading, setIsCaricatureLoading] = useState(false);
+  const [caricatureResult, setCaricatureResult] = useState<{
+    comment: string;
+    prompt: string;
+    imageUrl: string;
+  } | null>(null);
+  const [caricaturePreview, setCaricaturePreview] = useState<string | null>(null);
 
   const { history, addToHistory, deleteFromHistory, clearHistory } = usePromptHistory();
 
@@ -292,7 +304,90 @@ export default function Home() {
     }
   };
 
-  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling;
+  // Caricature feature handlers
+  const handleCaricatureImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be smaller than 10MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setCaricaturePreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCaricatureGenerate = async () => {
+    if (!caricaturePreview) {
+      toast.error('Please select an image first');
+      return;
+    }
+
+    setIsCaricatureLoading(true);
+    setIsCaricatureModalOpen(false);
+    setGlobalError('');
+
+    try {
+      const response = await fetch('/api/caricature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUrl: caricaturePreview }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate caricature');
+      if (!data?.imageUrl) throw new Error('Failed to generate caricature image');
+
+      setCaricatureResult({
+        comment: data.comment,
+        prompt: data.prompt,
+        imageUrl: data.imageUrl,
+      });
+      setCaricaturePreview(null);
+      toast.success('Caricature ready!');
+    } catch (err: unknown) {
+      console.error('Caricature error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setGlobalError(message);
+      toast.error(message);
+    } finally {
+      setIsCaricatureLoading(false);
+    }
+  };
+
+  const handleCaricatureDownload = async () => {
+    if (!caricatureResult?.imageUrl) return;
+
+    try {
+      const response = await fetch(caricatureResult.imageUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `xpressionist-caricature.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Downloaded!');
+    } catch {
+      toast.error('Download failed');
+    }
+  };
+
+  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling || isCaricatureLoading;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -325,6 +420,9 @@ export default function Home() {
         )}
         {isOsintProfiling && (
           <LoadingOverlay type="osint" username={loadingUsername || undefined} />
+        )}
+        {isCaricatureLoading && (
+          <LoadingOverlay type="caricature" />
         )}
 
         <main className="relative z-10 min-h-screen px-6 lg:px-12 py-16 lg:py-24 flex flex-col justify-center">
@@ -392,6 +490,67 @@ export default function Home() {
                           CashApp: $applelamps
                         </Button>
                       </a>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Caricature Upload Modal */}
+                <Dialog open={isCaricatureModalOpen} onOpenChange={(open) => {
+                  setIsCaricatureModalOpen(open);
+                  if (!open) setCaricaturePreview(null);
+                }}>
+                  <DialogContent className="sm:max-w-md bg-neutral-900 border-white/10 text-white">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-xl">
+                        <Pencil className="w-5 h-5 text-purple-500" />
+                        Create Caricature
+                      </DialogTitle>
+                      <DialogDescription className="text-neutral-400">
+                        Upload a photo and our Times Square artist will draw your caricature!
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-4">
+                      {/* Upload area */}
+                      <label className="block">
+                        <div className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${caricaturePreview
+                            ? 'border-purple-500/50 bg-purple-500/5'
+                            : 'border-white/20 hover:border-purple-500/50 hover:bg-white/5'
+                          }`}>
+                          {caricaturePreview ? (
+                            <div className="space-y-3">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={caricaturePreview}
+                                alt="Preview"
+                                className="max-h-48 mx-auto rounded-lg"
+                              />
+                              <p className="text-sm text-neutral-400">Click to change photo</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <Upload className="w-10 h-10 mx-auto text-neutral-500" />
+                              <p className="text-neutral-300 font-medium">Drop your photo here</p>
+                              <p className="text-sm text-neutral-500">or click to browse</p>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCaricatureImageSelect}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </div>
+                      </label>
+
+                      {/* Generate button */}
+                      <Button
+                        onClick={handleCaricatureGenerate}
+                        disabled={!caricaturePreview}
+                        className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 disabled:opacity-50"
+                      >
+                        <Pencil className="w-5 h-5 mr-2" />
+                        Draw My Caricature
+                      </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -510,6 +669,15 @@ export default function Home() {
                                 OSINT
                               </button>
                             </div>
+                            {/* Caricature Button */}
+                            <button
+                              onClick={() => setIsCaricatureModalOpen(true)}
+                              disabled={isBusy}
+                              className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                            >
+                              <Pencil className="w-4 h-4" />
+                              Caricature
+                            </button>
                           </div>
                         </div>
 
@@ -839,6 +1007,55 @@ export default function Home() {
                   <div className="bg-gradient-to-r from-emerald-950/50 via-emerald-900/30 to-emerald-950/50 border-t border-emerald-800/40 px-6 py-2 text-center">
                     <span className="text-emerald-500/60 font-bold tracking-[0.3em] text-[11px]">USER CLASSIFICATION DOSSIER</span>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Caricature Result Section */}
+            {caricatureResult && (
+              <div className="space-y-8 animate-fade-in" id="caricature-results">
+                {/* Artist Comment */}
+                <div className="max-w-2xl mx-auto text-center">
+                  <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-purple-500/10 border border-purple-500/20">
+                    <Pencil className="w-5 h-5 text-purple-400" />
+                    <p className="text-lg text-purple-300 italic">&ldquo;{caricatureResult.comment}&rdquo;</p>
+                  </div>
+                </div>
+
+                {/* Generated Caricature */}
+                <div className="flex justify-center">
+                  <div className="relative inline-block rounded-2xl overflow-hidden border border-purple-500/20 shadow-2xl shadow-purple-900/30 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={caricatureResult.imageUrl}
+                      alt="Your caricature"
+                      className="max-w-[90vw] md:max-w-2xl h-auto"
+                    />
+
+                    {/* Floating actions */}
+                    <div className="absolute bottom-4 right-4 flex gap-2">
+                      <button
+                        onClick={handleCaricatureDownload}
+                        className="px-4 py-2 bg-black/50 backdrop-blur-md border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-black/70 transition-colors shadow-lg flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Generate another */}
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      setCaricatureResult(null);
+                      setIsCaricatureModalOpen(true);
+                    }}
+                    className="text-neutral-500 hover:text-white transition-colors text-sm"
+                  >
+                    Create another caricature →
+                  </button>
                 </div>
               </div>
             )}

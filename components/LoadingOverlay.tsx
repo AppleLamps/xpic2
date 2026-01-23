@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Search, Sparkles, Paintbrush, Zap, TrendingUp, Eye, Brain, Palette } from 'lucide-react';
 
-type LoadingType = 'photo' | 'roast' | 'fbi' | 'osint';
+type LoadingType = 'photo' | 'roast' | 'fbi' | 'osint' | 'caricature';
 type PhotoStage = 'analyze' | 'image';
 
 interface LoadingOverlayProps {
@@ -54,12 +54,22 @@ const OSINT_MESSAGES = [
   { text: 'Compiling comprehensive dossier...', icon: Sparkles },
 ];
 
+const CARICATURE_MESSAGES = [
+  { text: 'Studying your features...', icon: Eye },
+  { text: 'Finding your best angle...', icon: Search },
+  { text: 'Exaggerating the good stuff...', icon: Sparkles },
+  { text: 'Sketching with marker...', icon: Paintbrush },
+  { text: 'Adding comedic flair...', icon: Zap },
+  { text: 'Almost done with your portrait...', icon: Palette },
+];
+
 // Estimated durations in seconds
 const DURATIONS: Record<LoadingType, number> = {
   photo: 45,  // 2 stages combined
   roast: 30,
   fbi: 30,
   osint: 90,
+  caricature: 45,
 };
 
 export function LoadingOverlay({ type, stage, username }: LoadingOverlayProps) {
@@ -73,6 +83,7 @@ export function LoadingOverlay({ type, stage, username }: LoadingOverlayProps) {
     }
     if (type === 'roast') return ROAST_MESSAGES;
     if (type === 'fbi') return FBI_MESSAGES;
+    if (type === 'caricature') return CARICATURE_MESSAGES;
     return OSINT_MESSAGES;
   }, [type, stage]);
 
@@ -133,6 +144,7 @@ export function LoadingOverlay({ type, stage, username }: LoadingOverlayProps) {
     }
     if (type === 'roast') return 'Crafting Your Roast';
     if (type === 'fbi') return 'Building Profile';
+    if (type === 'caricature') return 'Drawing Your Caricature';
     return 'Compiling Dossier';
   };
 
@@ -198,6 +210,7 @@ export function LoadingOverlay({ type, stage, username }: LoadingOverlayProps) {
           {type === 'roast' && 'Finding the perfect balance of savage and affectionate...'}
           {type === 'fbi' && 'All information is sourced from public posts only...'}
           {type === 'osint' && 'Building the most comprehensive profile possible...'}
+          {type === 'caricature' && 'A veteran Times Square artist is working on your portrait...'}
         </p>
       </div>
     </div>

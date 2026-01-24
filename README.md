@@ -37,10 +37,58 @@ No login required. No API keys needed from users. Just enter a username and go.
 | 🕵️ **FBI Profile** | Satirical FBI behavioral analysis reports with dark humor |
 | 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive |
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
-| 🖼️ **10 Art Styles** | MAD Magazine, Studio Ghibli, Pixar, Anime, Comic Book, Watercolor, Oil Painting, Cyberpunk, Retro Pop Art, Minimalist |
+| 🖼️ **22 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
 | 📜 **Prompt History** | Local storage-based history with copy/delete functionality |
 | 🔗 **Shareable Links** | Generate shareable URLs for created artwork |
 | 📱 **Responsive Design** | Beautiful glass-morphism UI with iPhone-style interface |
+
+---
+
+## Art Styles
+
+X-pressionist offers **22 unique art styles** organized into 5 categories:
+
+### Classic (5 styles)
+| Style | ID | Description |
+|-------|-----|-------------|
+| MAD Magazine | `default` | Bold satirical cartoon style with vibrant colors and exaggerated expressions |
+| Oil Painting | `oil` | Classical oil painting with rich textures and dramatic chiaroscuro lighting |
+| Watercolor | `watercolor` | Soft, dreamy painting with flowing colors and gentle gradients |
+| Charcoal Sketch | `charcoal` | Dramatic drawing with bold strokes, deep blacks, and expressive lines |
+| Renaissance | `renaissance` | Classical Leonardo/Raphael style portrait with sfumato technique |
+
+### Anime (5 styles)
+| Style | ID | Description |
+|-------|-----|-------------|
+| Studio Ghibli | `ghibli` | Whimsical Miyazaki fantasy style with soft pastels and warm nostalgia |
+| Anime | `anime` | Dynamic Japanese anime with bold lines and expressive eyes |
+| Manga B&W | `manga` | Black & white manga panels with dramatic ink work and screentone shading |
+| Chibi | `chibi` | Super-cute kawaii style with oversized head and tiny body |
+| Ukiyo-e | `ukiyo` | Japanese woodblock prints in elegant Hokusai aesthetic |
+
+### Modern (6 styles)
+| Style | ID | Description |
+|-------|-----|-------------|
+| Pixar 3D | `pixar` | 3D animated movie style with expressive characters and vibrant colors |
+| Cyberpunk | `cyberpunk` | Neon-lit futuristic style with holographic elements and pink/cyan palette |
+| Vaporwave | `vaporwave` | 80s/90s aesthetic nostalgia with glitchy effects and gradient sunsets |
+| Low Poly | `lowpoly` | Geometric 3D faceted style with clean angular shapes |
+| Neon Glow | `neon` | Glowing neon light art with bright luminous outlines on dark background |
+| Minimalist | `minimalist` | Clean minimal illustration with simple shapes and lots of white space |
+
+### Artistic (3 styles)
+| Style | ID | Description |
+|-------|-----|-------------|
+| Comic Book | `comic` | Bold Marvel/DC style with thick outlines, halftone dots, and action lines |
+| Retro Pop Art | `retro` | 80s/90s pop art with neon colors, pixel elements, and synthwave vibes |
+| Impressionist | `impressionist` | Monet/Renoir style with visible brushstrokes and dappled light |
+
+### Fun (3 styles)
+| Style | ID | Description |
+|-------|-----|-------------|
+| Sticker Art | `sticker` | Die-cut sticker aesthetic with bold outlines and flat vibrant colors |
+| Claymation | `claymation` | Stop-motion clay style like Wallace & Gromit with charming handmade quality |
+| Street Graffiti | `graffiti` | Urban spray paint art with dripping effects and raw street energy |
 
 ---
 
@@ -189,8 +237,10 @@ xpressionist/
 ├── components/
 │   ├── ui/                     # shadcn/ui components
 │   ├── LoadingOverlay.tsx      # Animated loading states
+│   ├── OsintReport.tsx         # OSINT dossier renderer
 │   ├── PromptHistorySidebar.tsx
-│   └── ShareButton.tsx
+│   ├── ShareButton.tsx
+│   └── StyleSelectorModal.tsx  # 22 art style selector
 ├── db/
 │   ├── index.ts                # Neon connection
 │   └── schema.ts               # Drizzle schema

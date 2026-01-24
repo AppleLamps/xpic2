@@ -49,11 +49,11 @@
 
 /* Wrapped Background - Dark theme */
 .wrapped-background {
-  background-color: #050505;
+  background-color: #0a0a0a;
   background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(30, 27, 38, 0.8) 0, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(59, 78, 128, 0.4) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(127, 63, 91, 0.4) 0, transparent 50%);
   background-attachment: fixed;
   position: fixed;
   inset: 0;
@@ -65,7 +65,7 @@
   position: absolute;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  opacity: 0.4;
+  opacity: 0.25;
   pointer-events: none;
 }
 
@@ -180,10 +180,11 @@ html {
 
 /* Gradient text - Wrapped style */
 .gradient-text {
-  background: linear-gradient(to right, #ff4d4d, #f9cb28);
+  background: linear-gradient(135deg, #f43f5e 0%, #fb923c 50%, #fbbf24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 /* Sidebar styling */
@@ -192,10 +193,10 @@ html {
   color: hsl(var(--sidebar-foreground));
 }
 
-/* Input glow on focus */
+/* Input focus - refined and subtle */
 input:focus {
-  box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.5);
-  border-color: rgba(255, 77, 77, 0.5);
+  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* Smooth dialog animations */
@@ -315,13 +316,14 @@ input:focus {
     #2a2a2c 100%
   );
 
-  /* Depth and shadows */
+  /* Refined titanium edge effect */
   box-shadow:
-    0 30px 60px -15px rgba(0, 0, 0, 0.5),
-    0 15px 30px -10px rgba(0, 0, 0, 0.4),
-    inset 2px 2px 4px rgba(255, 255, 255, 0.1),
-    inset -2px -2px 4px rgba(0, 0, 0, 0.15),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 0 3px rgba(0, 0, 0, 0.8),
+    0 25px 50px -12px rgba(0, 0, 0, 0.8),
+    0 50px 100px -20px rgba(0, 0, 0, 0.5),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.08),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.15);
 
   transition: transform 0.3s ease;
 }
@@ -489,17 +491,17 @@ input:focus {
   z-index: 20;
 }
 
-/* Ambient glow behind phone */
+/* Ambient glow behind phone - refined and subtle */
 .phone-glow {
   position: absolute;
-  inset: -20%;
+  inset: -15%;
   background: radial-gradient(
     ellipse at center,
-    rgba(255, 77, 77, 0.15) 0%,
-    rgba(249, 203, 40, 0.08) 40%,
+    rgba(244, 63, 94, 0.08) 0%,
+    rgba(251, 146, 60, 0.05) 30%,
     transparent 70%
   );
-  filter: blur(60px);
+  filter: blur(80px);
   pointer-events: none;
   z-index: -1;
 }
@@ -535,7 +537,7 @@ input:focus {
 
 @keyframes subtle-float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-3px); }
 }
 
 .iphone-container {
@@ -543,6 +545,6 @@ input:focus {
 }
 
 .iphone-frame {
-  animation: subtle-float 5s ease-in-out infinite;
+  animation: subtle-float 6s ease-in-out infinite;
   animation-delay: 0.7s;
 }

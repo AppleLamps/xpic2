@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 /**
- * xAI Grok API response schema
- * Used for analyze-account, roast-account, and fbi-profile endpoints
+ * xAI Grok Chat Completions API response schema (legacy)
+ * Used for non-search endpoints
  */
 export const GrokResponseSchema = z.object({
   choices: z
@@ -15,6 +15,52 @@ export const GrokResponseSchema = z.object({
     )
     .min(1, 'No choices returned from Grok API'),
 });
+
+/**
+ * xAI Grok Responses API schema (new Agent Tools API)
+ * Used for analyze-account, roast-account, fbi-profile, osint-profile endpoints with search tools
+ * The Responses API returns output as an array with content items
+ */
+export const GrokResponsesApiSchema = z.object({
+  output: z.array(
+    z.object({
+      type: z.string(),
+      content: z.array(
+        z.object({
+          type: z.string(),
+          text: z.string().optional(),
+        })
+      ).optional(),
+    })
+  ),
+  citations: z.array(z.string()).optional(),
+});
+
+/**
+ * Helper to extract content from validated Grok Responses API response
+ */
+export function extractGrokResponsesContent(data: z.infer<typeof GrokResponsesApiSchema>): string {
+  // Find the message output item and extract text from its content
+  for (const item of data.output) {
+    if (item.type === 'message' && item.content) {
+      const textContent = item.content.find(c => c.type === 'output_text' || c.type === 'text');
+      if (textContent?.text) {
+        return textContent.text;
+      }
+    }
+  }
+  // Fallback: try to find any text content
+  for (const item of data.output) {
+    if (item.content) {
+      for (const content of item.content) {
+        if (content.text) {
+          return content.text;
+        }
+      }
+    }
+  }
+  return '';
+}
 
 /**
  * OpenRouter/Gemini image generation response schema

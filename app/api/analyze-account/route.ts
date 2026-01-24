@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, xAccountCache } from '@/db';
 import { eq, gt, and } from 'drizzle-orm';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
-import { GrokResponseSchema, extractGrokContent, getCorsHeaders } from '@/lib/schemas';
+import { GrokResponseSchema, extractGrokContent, GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 
 // Feature flag: Set to true to enable caching
 const ENABLE_CACHING = process.env.ENABLE_CACHING === 'true';
@@ -112,12 +112,7 @@ Content Guidelines:
 
     let imagePrompt: string;
 
-    // Build date range for search (6 months)
     const today = new Date();
-    const toDate = today.toISOString().split('T')[0];
-    const DAYS_IN_6_MONTHS = 182;
-    const sixMonthsAgo = new Date(today.getTime() - DAYS_IN_6_MONTHS * 24 * 60 * 60 * 1000);
-    const fromDate = sixMonthsAgo.toISOString().split('T')[0];
 
     // Use cached data if available and caching is enabled
     if (ENABLE_CACHING && cachedData?.searchResponse) {
@@ -175,7 +170,7 @@ Content Guidelines:
       console.log(`Performing agentic search for @${handle}${ENABLE_CACHING ? ' (cache miss)' : ' (caching disabled)'}`);
 
       const response = await fetchWithTimeout(
-        'https://api.x.ai/v1/chat/completions',
+        'https://api.x.ai/v1/responses',
         {
           method: 'POST',
           headers: {
@@ -185,7 +180,7 @@ Content Guidelines:
           body: JSON.stringify({
             // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
             model: 'grok-4-1-fast',
-            messages: [
+            input: [
               { role: 'system', content: systemPrompt },
               {
                 role: 'user',
@@ -229,12 +224,9 @@ DO NOT produce a shallow analysis. Adapt your search strategy to the account's a
 Based on this deep, multi-faceted analysis, create a humorous but highly relevant and specific image generation prompt that captures their account's essence, visual aesthetic, personality, and unique characteristics.`,
               },
             ],
-            search_parameters: {
-              mode: 'on',
-              sources: [{ type: 'x' }],
-              from_date: fromDate,
-              to_date: toDate,
-            },
+            tools: [
+              { type: 'x_search' },
+            ],
           }),
         },
         API_TIMEOUTS.ENHANCED_ACCOUNT_ANALYSIS
@@ -250,7 +242,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
       }
 
       const rawData = await response.json();
-      const validationResult = GrokResponseSchema.safeParse(rawData);
+      const validationResult = GrokResponsesApiSchema.safeParse(rawData);
 
       if (!validationResult.success) {
         console.error('Invalid Grok API response structure:', validationResult.error);
@@ -260,7 +252,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
         );
       }
 
-      imagePrompt = extractGrokContent(validationResult.data);
+      imagePrompt = extractGrokResponsesContent(validationResult.data);
 
       // Cache the response if caching is enabled
       if (ENABLE_CACHING) {

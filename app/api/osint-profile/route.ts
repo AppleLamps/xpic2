@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
-import { GrokResponseSchema, extractGrokContent, getCorsHeaders } from '@/lib/schemas';
+import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 
 // OSINT-style Internal User Classification Analyst - Enhanced Edition
 const systemPrompt = `You are an elite OSINT analyst producing a comprehensive "Internal User Classification" dossier for a specified X (Twitter) username. You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches, gather hundreds of posts, find viral content, and leave no stone unturned. Your goal is the most complete public profile possible.
@@ -246,15 +246,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build date range for search based on timeRange parameter
     const today = new Date();
-    const toDate = today.toISOString().split('T')[0];
     const daysBack = parseInt(timeRange) || 90;
-    const fromDateObj = new Date(today.getTime() - daysBack * 24 * 60 * 60 * 1000);
-    const fromDate = fromDateObj.toISOString().split('T')[0];
 
     const response = await fetchWithTimeout(
-      'https://api.x.ai/v1/chat/completions',
+      'https://api.x.ai/v1/responses',
       {
         method: 'POST',
         headers: {
@@ -264,7 +260,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
           model: 'grok-4-1-fast',
-          messages: [
+          input: [
             { role: 'system', content: systemPrompt },
             {
               role: 'user',
@@ -280,12 +276,10 @@ CRITICAL REQUIREMENTS:
 Do NOT produce a shallow report. Use multiple searches. Find their greatest hits. Map their influence. This should be the definitive public profile of this account.`,
             },
           ],
-          search_parameters: {
-            mode: 'on',
-            sources: [{ type: 'x' }, { type: 'web' }],
-            from_date: fromDate,
-            to_date: toDate,
-          },
+          tools: [
+            { type: 'x_search' },
+            { type: 'web_search' },
+          ],
         }),
       },
       API_TIMEOUTS.OSINT_ANALYSIS
@@ -301,7 +295,7 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
     }
 
     const rawData = await response.json();
-    const validationResult = GrokResponseSchema.safeParse(rawData);
+    const validationResult = GrokResponsesApiSchema.safeParse(rawData);
 
     if (!validationResult.success) {
       console.error('Invalid Grok API response structure:', validationResult.error);
@@ -311,7 +305,7 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
       );
     }
 
-    const osintReport = extractGrokContent(validationResult.data);
+    const osintReport = extractGrokResponsesContent(validationResult.data);
 
     if (!osintReport) {
       return NextResponse.json(

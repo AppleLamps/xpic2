@@ -16,41 +16,39 @@ import {
   Search,
   X,
   ZoomIn,
-  Palette,
   Pencil,
   Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { PromptHistorySidebar } from '@/components/PromptHistorySidebar';
 import { usePromptHistory } from '@/hooks/usePromptHistory';
 import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { ShareButton } from '@/components/ShareButton';
+import { OsintReport } from '@/components/OsintReport';
+import { StyleSelectorModal, StyleSelectorTrigger } from '@/components/StyleSelectorModal';
 
 const SUGGESTION_HANDLES = ['levelsio', 'pmarca', 'OfficialLoganK'];
 
-// Art style options for image generation
-export type ArtStyle = {
-  id: string;
-  name: string;
-  emoji: string;
-  description: string;
-};
+// History trigger that moves when sidebar opens
+function HistoryTrigger() {
+  const { open, openMobile, isMobile } = useSidebar();
+  const isOpen = isMobile ? openMobile : open;
 
-export const ART_STYLES: ArtStyle[] = [
-  { id: 'default', name: 'MAD Magazine', emoji: '🎨', description: 'Bold satirical cartoon style' },
-  { id: 'ghibli', name: 'Studio Ghibli', emoji: '🌸', description: 'Whimsical anime fantasy style' },
-  { id: 'pixar', name: 'Pixar 3D', emoji: '🎬', description: '3D animated movie style' },
-  { id: 'anime', name: 'Anime', emoji: '⚡', description: 'Japanese anime style' },
-  { id: 'comic', name: 'Comic Book', emoji: '💥', description: 'Bold comic book panels' },
-  { id: 'watercolor', name: 'Watercolor', emoji: '🖌️', description: 'Soft watercolor painting' },
-  { id: 'oil', name: 'Oil Painting', emoji: '🎭', description: 'Classical oil painting style' },
-  { id: 'cyberpunk', name: 'Cyberpunk', emoji: '🤖', description: 'Neon-lit futuristic style' },
-  { id: 'retro', name: 'Retro Pop Art', emoji: '🕹️', description: '80s/90s pop art style' },
-  { id: 'minimalist', name: 'Minimalist', emoji: '⬜', description: 'Clean minimal illustration' },
-];
+  return (
+    <div
+      className="fixed top-6 z-50 transition-all duration-300 ease-in-out"
+      style={{ left: isOpen ? 'calc(16rem + 1.5rem)' : '1.5rem' }}
+    >
+      <SidebarTrigger className="p-3 bg-black/20 backdrop-blur-md rounded-xl border border-white/10 shadow-lg hover:bg-white/10 transition-all text-white">
+        <History className="h-5 w-5" />
+      </SidebarTrigger>
+    </div>
+  );
+}
+
 
 export default function Home() {
   const [handle, setHandle] = useState('');
@@ -75,6 +73,7 @@ export default function Home() {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
 
   // Caricature feature state
   const [isCaricatureModalOpen, setIsCaricatureModalOpen] = useState(false);
@@ -398,11 +397,7 @@ export default function Home() {
         <div className="wrapped-background fixed inset-0" />
 
         {/* History trigger */}
-        <div className="fixed top-6 left-6 z-50">
-          <SidebarTrigger className="p-3 bg-black/20 backdrop-blur-md rounded-xl border border-white/10 shadow-lg hover:bg-white/10 transition-all text-white">
-            <History className="h-5 w-5" />
-          </SidebarTrigger>
-        </div>
+        <HistoryTrigger />
 
         {/* Full-page loading overlay */}
         {isLoading && (
@@ -429,11 +424,11 @@ export default function Home() {
           <div className="max-w-6xl mx-auto w-full space-y-24">
 
             {/* Hero Section - Asymmetrical */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
               {/* Left: Title & Description */}
               <div className="space-y-8">
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-amber-500">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-amber-400/90 backdrop-blur-sm">
                     <Flame className="w-3 h-3" />
                     Powered by Grok AI
                   </div>
@@ -441,20 +436,20 @@ export default function Home() {
                     href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-emerald-500 hover:bg-white/10 transition-colors"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-emerald-400/90 backdrop-blur-sm hover:bg-white/[0.06] transition-colors"
                   >
                     <DollarSign className="w-3 h-3" />
                     Funded by Grokify CA: 8F2Fvu...BAGs
                   </a>
                 </div>
 
-                <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-white leading-[0.9] flex items-center gap-2">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center gap-3">
                   <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
                     <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
                   </svg>
                   <span className="gradient-text">pressionist</span>
                 </h1>
-                <p className="text-xl text-neutral-400 max-w-md leading-relaxed font-light">
+                <p className="text-lg md:text-xl text-neutral-300 max-w-md leading-relaxed tracking-tight">
                   Turn any X timeline into bespoke AI artwork.<br />
                   No login. No API keys. Just a username.
                 </p>
@@ -554,6 +549,15 @@ export default function Home() {
                     </div>
                   </DialogContent>
                 </Dialog>
+
+                {/* Style Selector Modal */}
+                <StyleSelectorModal
+                  open={isStyleModalOpen}
+                  onOpenChange={setIsStyleModalOpen}
+                  selectedStyle={selectedStyle}
+                  onSelectStyle={setSelectedStyle}
+                  disabled={isBusy}
+                />
               </div>
 
               {/* Right: Input Form - iPhone 16 Pro Style */}
@@ -602,7 +606,7 @@ export default function Home() {
                               onKeyDown={(e) => e.key === 'Enter' && !isBusy && handleGenerate()}
                               disabled={isBusy}
                               placeholder="username"
-                              className="w-full pl-9 pr-12 py-3.5 text-base bg-white/[0.08] border border-white/[0.12] rounded-2xl text-white placeholder:text-neutral-500 focus:outline-none focus:bg-white/[0.12] focus:border-rose-500/50 focus:shadow-[0_0_0_3px_rgba(244,63,94,0.15)] transition-all"
+                              className="w-full pl-9 pr-12 py-3.5 text-sm bg-white/[0.05] border border-white/[0.08] rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:border-white/20 focus:bg-white/[0.08] transition-colors duration-200"
                               autoComplete="off"
                               spellCheck={false}
                             />
@@ -616,30 +620,17 @@ export default function Home() {
                           </div>
 
                           {/* Style Selector */}
-                          <div className="relative">
-                            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-neutral-400 pointer-events-none">
-                              <Palette className="w-4 h-4" />
-                            </div>
-                            <select
-                              value={selectedStyle}
-                              onChange={(e) => setSelectedStyle(e.target.value)}
-                              disabled={isBusy}
-                              className="w-full pl-10 pr-10 py-3 text-sm bg-white/[0.08] border border-white/[0.12] rounded-2xl text-white appearance-none cursor-pointer focus:outline-none focus:bg-white/[0.12] focus:border-rose-500/50 transition-all"
-                            >
-                              {ART_STYLES.map((style) => (
-                                <option key={style.id} value={style.id} className="bg-neutral-900 text-white">
-                                  {style.emoji} {style.name}
-                                </option>
-                              ))}
-                            </select>
-                            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
-                          </div>
+                          <StyleSelectorTrigger
+                            selectedStyle={selectedStyle}
+                            onClick={() => setIsStyleModalOpen(true)}
+                            disabled={isBusy}
+                          />
 
-                          <div className="space-y-2.5">
+                          <div className="space-y-3">
                             <button
                               onClick={handleGenerate}
                               disabled={isBusy}
-                              className="w-full px-4 py-3 bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                              className="w-full px-4 py-3.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white font-medium rounded-xl shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-rose-500/20 hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
                             >
                               <Sparkles className="w-4 h-4" />
                               Generate Photo
@@ -648,7 +639,7 @@ export default function Home() {
                               <button
                                 onClick={handleRoast}
                                 disabled={isBusy}
-                                className="px-3 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                                className="px-3 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-xl shadow-md shadow-black/20 hover:shadow-lg hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-xs flex items-center justify-center gap-1.5"
                               >
                                 <Flame className="w-3.5 h-3.5" />
                                 Roast
@@ -656,14 +647,14 @@ export default function Home() {
                               <button
                                 onClick={handleFbiProfile}
                                 disabled={isBusy}
-                                className="px-3 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-semibold rounded-xl shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                                className="px-3 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-medium rounded-xl shadow-md shadow-black/20 hover:shadow-lg hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-xs flex items-center justify-center gap-1.5"
                               >
                                 FBI
                               </button>
                               <button
                                 onClick={handleOsintProfile}
                                 disabled={isBusy}
-                                className="px-3 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-xs flex items-center justify-center gap-1.5"
+                                className="px-3 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-medium rounded-xl shadow-md shadow-black/20 hover:shadow-lg hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-xs flex items-center justify-center gap-1.5"
                               >
                                 <Search className="w-3.5 h-3.5" />
                                 OSINT
@@ -673,7 +664,7 @@ export default function Home() {
                             <button
                               onClick={() => setIsCaricatureModalOpen(true)}
                               disabled={isBusy}
-                              className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100 text-sm flex items-center justify-center gap-2"
+                              className="w-full px-4 py-3.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium rounded-xl shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-purple-500/20 hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2"
                             >
                               <Pencil className="w-4 h-4" />
                               Caricature
@@ -985,9 +976,7 @@ export default function Home() {
                     </div>
 
                     {/* Report content with proper formatting */}
-                    <div className="text-[13px] leading-[1.9] whitespace-pre-wrap font-mono text-neutral-300 select-text cursor-text [&>*]:select-text">
-                      {osintReport}
-                    </div>
+                    <OsintReport content={osintReport} />
 
                     {/* Document footer */}
                     <div className="mt-12 pt-6 border-t border-emerald-900/30">

@@ -32,6 +32,30 @@ const STYLE_PROMPTS: Record<string, string> = {
   retro: `Create a retro pop art style illustration inspired by 80s and 90s aesthetics, with bold geometric shapes, neon colors, pixel art elements, synthwave vibes, VHS grain, and nostalgic vintage feel.`,
 
   minimalist: `Create a clean minimalist illustration with simple geometric shapes, limited color palette, lots of white space, flat design elements, and modern elegant simplicity.`,
+
+  charcoal: `Create a dramatic charcoal sketch illustration with bold strokes, deep blacks, soft grays, smudged textures, expressive lines, and the raw artistic quality of traditional life drawing.`,
+
+  renaissance: `Create a Renaissance portrait in the style of Leonardo da Vinci or Raphael, with sfumato technique, warm earth tones, classical composition, dramatic lighting, and timeless elegance.`,
+
+  manga: `Create a black and white manga-style illustration with dramatic ink work, screentone shading, dynamic panel composition, expressive lines, and the distinctive aesthetic of Japanese comic art.`,
+
+  chibi: `Create a super-cute chibi-style illustration with an oversized head, tiny body, huge sparkling eyes, rounded features, pastel colors, and the adorable kawaii aesthetic.`,
+
+  vaporwave: `Create a vaporwave aesthetic illustration with glitchy effects, Roman busts, gradient sunsets in pink and purple, palm trees, geometric shapes, 80s/90s nostalgia, and dreamy surreal atmosphere.`,
+
+  lowpoly: `Create a low-poly 3D style illustration with geometric faceted surfaces, limited color palette, clean angular shapes, subtle gradients between polygons, and modern minimalist 3D aesthetic.`,
+
+  neon: `Create a neon glow art illustration with bright luminous outlines, dark background, vibrant electric colors (pink, blue, purple), light bloom effects, and retro arcade aesthetic.`,
+
+  impressionist: `Create an impressionist painting illustration in the style of Monet or Renoir, with visible brushstrokes, soft edges, dappled light, pastel colors, and the dreamy atmospheric quality of French impressionism.`,
+
+  sticker: `Create a sticker art style illustration with bold outlines, flat vibrant colors, die-cut border effect, subtle drop shadow, and the playful aesthetic of vinyl stickers.`,
+
+  claymation: `Create a claymation-style illustration that looks like stop-motion animation with clay figures, visible texture, soft lighting, rounded shapes, and the charming handmade quality of Wallace & Gromit.`,
+
+  graffiti: `Create a street graffiti art illustration with bold spray paint style, dripping effects, bubble letters, urban textures, vibrant colors, and the raw energy of street art murals.`,
+
+  ukiyo: `Create a Japanese ukiyo-e woodblock print style illustration with flat colors, bold outlines, wave patterns, traditional composition, limited color palette, and the elegant aesthetic of Hokusai.`,
 };
 
 // Enhanced prompt wrapper - incorporates style and prevents text misspellings

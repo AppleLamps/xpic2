@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
-import { GrokResponseSchema, extractGrokContent, getCorsHeaders } from '@/lib/schemas';
+import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
 
 // Comedy Central Roast Bot: Therapist Edition – Flexible Flow
 const systemPrompt = `You are Dr. Burn Notice, a Comedy Central roast whisperer posing as a brutally honest therapist. Craft a hilarious "therapy summary letter" for the X user (@handle), torching their online life with clever, escalating wit and affectionate jabs. Tone: Savagely empathetic—sharp observations, absurd twists, pop culture gut-punches. Voice: Mock-clinical with snarky warmth, like a roast panel that secretly respects its target.
@@ -57,15 +57,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build date range for search (last ~6 months)
-    const today = new Date();
-    const toDate = today.toISOString().split('T')[0];
-    const DAYS_IN_6_MONTHS = 182;
-    const sixMonthsAgo = new Date(today.getTime() - DAYS_IN_6_MONTHS * 24 * 60 * 60 * 1000);
-    const fromDate = sixMonthsAgo.toISOString().split('T')[0];
-
     const response = await fetchWithTimeout(
-      'https://api.x.ai/v1/chat/completions',
+      'https://api.x.ai/v1/responses',
       {
         method: 'POST',
         headers: {
@@ -75,19 +68,16 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           // DO NOT CHANGE THIS MODEL - grok-4-1-fast is required for X search functionality
           model: 'grok-4-1-fast',
-          messages: [
+          input: [
             { role: 'system', content: systemPrompt },
             {
               role: 'user',
-              content: `Analyze @${handle}'s posts and write the roast letter as described.`,
+              content: `Analyze @${handle}'s posts from the last 6 months and write the roast letter as described.`,
             },
           ],
-          search_parameters: {
-            mode: 'on',
-            sources: [{ type: 'x' }],
-            from_date: fromDate,
-            to_date: toDate,
-          },
+          tools: [
+            { type: 'x_search' },
+          ],
         }),
       },
       API_TIMEOUTS.GROK_ANALYSIS
@@ -103,7 +93,7 @@ export async function POST(req: NextRequest) {
     }
 
     const rawData = await response.json();
-    const validationResult = GrokResponseSchema.safeParse(rawData);
+    const validationResult = GrokResponsesApiSchema.safeParse(rawData);
 
     if (!validationResult.success) {
       console.error('Invalid Grok API response structure:', validationResult.error);
@@ -113,7 +103,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const roastLetter = extractGrokContent(validationResult.data);
+    const roastLetter = extractGrokResponsesContent(validationResult.data);
 
     if (!roastLetter) {
       return NextResponse.json(

@@ -474,87 +474,72 @@ export default function PromptPage() {
                 </h2>
                 <div className="space-y-4">
                   {/* Emily's JSON Mode */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between group">
                     <div>
-                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400 group-hover:text-amber-500/80 transition-colors">
                         EMILY_JSON_MODE
                       </span>
                       <a
                         href="https://x.com/IamEmily2050"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block text-xs text-gray-600 hover:text-amber-500 mt-0.5"
+                        className="block text-[10px] text-gray-600 hover:text-amber-500 mt-0.5 font-mono"
                       >
                         @IamEmily2050
                       </a>
                     </div>
                     <button
                       type="button"
-                      role="switch"
-                      aria-checked={isJsonMode ? "true" : "false"}
-                      aria-label="Toggle Emily JSON Mode"
                       onClick={() => setIsJsonMode((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-sm cursor-pointer transition-colors ${
-                        isJsonMode ? 'bg-amber-500' : 'bg-[#1a1a1a] border border-white/10'
+                      className={`min-w-[80px] px-3 py-1.5 text-xs font-mono border transition-all ${
+                        isJsonMode
+                          ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                          : 'bg-black/40 border-white/10 text-gray-500 hover:border-amber-500/50 hover:text-amber-500'
                       }`}
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform transition-transform ${
-                          isJsonMode ? 'translate-x-[22px] bg-black' : 'translate-x-0.5 bg-gray-200'
-                        }`}
-                      />
+                      {isJsonMode ? '[ACTIVE]' : '[INACTIVE]'}
                     </button>
                   </div>
 
                   {/* Test Mode */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between group">
                     <div>
-                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400 group-hover:text-amber-500/80 transition-colors">
                         TEST_ELYSIAN
                       </span>
-                      <span className="block text-xs text-gray-600 mt-0.5">Elysian Visions</span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5 font-mono">Elysian Visions</span>
                     </div>
                     <button
                       type="button"
-                      role="switch"
-                      aria-checked={isTestMode ? "true" : "false"}
-                      aria-label="Toggle Test Elysian Mode"
                       onClick={() => setIsTestMode((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-sm cursor-pointer transition-colors ${
-                        isTestMode ? 'bg-amber-500' : 'bg-[#1a1a1a] border border-white/10'
+                      className={`min-w-[80px] px-3 py-1.5 text-xs font-mono border transition-all ${
+                        isTestMode
+                          ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                          : 'bg-black/40 border-white/10 text-gray-500 hover:border-amber-500/50 hover:text-amber-500'
                       }`}
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform transition-transform ${
-                          isTestMode ? 'translate-x-[22px] bg-black' : 'translate-x-0.5 bg-gray-200'
-                        }`}
-                      />
+                      {isTestMode ? '[ACTIVE]' : '[INACTIVE]'}
                     </button>
                   </div>
 
                   {/* Video Prompt */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between group">
                     <div>
-                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400 group-hover:text-amber-500/80 transition-colors">
                         VIDEO_SEQ
                       </span>
-                      <span className="block text-xs text-gray-600 mt-0.5">Text-to-video</span>
+                      <span className="block text-[10px] text-gray-600 mt-0.5 font-mono">Text-to-video</span>
                     </div>
                     <button
                       type="button"
-                      role="switch"
-                      aria-checked={isVideoPrompt ? "true" : "false"}
-                      aria-label="Toggle Video Sequence Mode"
                       onClick={() => setIsVideoPrompt((v) => !v)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-sm cursor-pointer transition-colors ${
-                        isVideoPrompt ? 'bg-amber-500' : 'bg-[#1a1a1a] border border-white/10'
+                      className={`min-w-[80px] px-3 py-1.5 text-xs font-mono border transition-all ${
+                        isVideoPrompt
+                          ? 'bg-amber-500 border-amber-500 text-black font-bold shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                          : 'bg-black/40 border-white/10 text-gray-500 hover:border-amber-500/50 hover:text-amber-500'
                       }`}
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform transition-transform ${
-                          isVideoPrompt ? 'translate-x-[22px] bg-black' : 'translate-x-0.5 bg-gray-200'
-                        }`}
-                      />
+                      {isVideoPrompt ? '[ACTIVE]' : '[INACTIVE]'}
                     </button>
                   </div>
                 </div>
@@ -597,9 +582,9 @@ export default function PromptPage() {
               disabled={isAnyLoading || (!idea.trim() && !imageBase64)}
               className={`px-8 py-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                 isLoading
-                  ? 'bg-gradient-to-r from-amber-700 via-amber-500 to-amber-700 bg-[length:200%_100%] animate-shimmer'
-                  : 'bg-amber-500 hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]'
-              } text-black`}
+                  ? 'bg-gradient-to-r from-amber-500 via-yellow-200 to-amber-500 bg-[length:200%_100%] animate-shimmer text-black border border-amber-400'
+                  : 'bg-amber-500 hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] text-black'
+              }`}
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />

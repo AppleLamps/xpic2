@@ -37,18 +37,19 @@ No login required. No API keys needed from users. Just enter a username and go.
 | 🕵️ **FBI Profile** | Satirical FBI behavioral analysis reports with dark humor |
 | 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive |
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
-| 🖼️ **22 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
+| ✨ **Grokify Prompt** | Transform any idea into a polished AI prompt with Grok |
+| 🖼️ **38 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
 | 📜 **Prompt History** | Local storage-based history with copy/delete functionality |
 | 🔗 **Shareable Links** | Generate shareable URLs for created artwork |
-| 📱 **Responsive Design** | Beautiful glass-morphism UI with iPhone-style interface |
+| 📱 **Responsive Design** | Beautiful mobile-first UI with iPhone-style interface |
 
 ---
 
 ## Art Styles
 
-X-pressionist offers **22 unique art styles** organized into 5 categories:
+X-pressionist offers **38 unique art styles** organized into 5 categories:
 
-### Classic (5 styles)
+### Classic (8 styles)
 | Style | ID | Description |
 |-------|-----|-------------|
 | MAD Magazine | `default` | Bold satirical cartoon style with vibrant colors and exaggerated expressions |
@@ -56,8 +57,11 @@ X-pressionist offers **22 unique art styles** organized into 5 categories:
 | Watercolor | `watercolor` | Soft, dreamy painting with flowing colors and gentle gradients |
 | Charcoal Sketch | `charcoal` | Dramatic drawing with bold strokes, deep blacks, and expressive lines |
 | Renaissance | `renaissance` | Classical Leonardo/Raphael style portrait with sfumato technique |
+| Baroque | `baroque` | Ornate dramatic lighting in the style of Caravaggio or Rembrandt |
+| Pencil Sketch | `pencil` | Detailed pencil drawing with fine linework and crosshatching |
+| Art Deco | `artdeco` | 1920s geometric elegance with luxurious gold and black colors |
 
-### Anime (5 styles)
+### Anime (7 styles)
 | Style | ID | Description |
 |-------|-----|-------------|
 | Studio Ghibli | `ghibli` | Whimsical Miyazaki fantasy style with soft pastels and warm nostalgia |
@@ -65,8 +69,10 @@ X-pressionist offers **22 unique art styles** organized into 5 categories:
 | Manga B&W | `manga` | Black & white manga panels with dramatic ink work and screentone shading |
 | Chibi | `chibi` | Super-cute kawaii style with oversized head and tiny body |
 | Ukiyo-e | `ukiyo` | Japanese woodblock prints in elegant Hokusai aesthetic |
+| Shonen Action | `shonen` | Epic battle manga style like Dragon Ball or Naruto |
+| Manhwa | `manhwa` | Korean webtoon style with clean digital linework |
 
-### Modern (6 styles)
+### Modern (9 styles)
 | Style | ID | Description |
 |-------|-----|-------------|
 | Pixar 3D | `pixar` | 3D animated movie style with expressive characters and vibrant colors |
@@ -75,20 +81,36 @@ X-pressionist offers **22 unique art styles** organized into 5 categories:
 | Low Poly | `lowpoly` | Geometric 3D faceted style with clean angular shapes |
 | Neon Glow | `neon` | Glowing neon light art with bright luminous outlines on dark background |
 | Minimalist | `minimalist` | Clean minimal illustration with simple shapes and lots of white space |
+| Glitch Art | `glitch` | Digital corruption aesthetic with RGB splitting and scan lines |
+| Synthwave | `synthwave` | Retro-futuristic 80s with neon grids and sunset gradients |
+| Hyperrealistic | `hyperreal` | Ultra-detailed photorealism with perfect textures |
 
-### Artistic (3 styles)
+### Artistic (8 styles)
 | Style | ID | Description |
 |-------|-----|-------------|
 | Comic Book | `comic` | Bold Marvel/DC style with thick outlines, halftone dots, and action lines |
 | Retro Pop Art | `retro` | 80s/90s pop art with neon colors, pixel elements, and synthwave vibes |
 | Impressionist | `impressionist` | Monet/Renoir style with visible brushstrokes and dappled light |
+| Surrealism | `surreal` | Dreamlike Salvador Dalí style with impossible imagery |
+| Warhol Pop | `warhol` | Andy Warhol screen print aesthetic with bold flat colors |
+| Film Noir | `noir` | Moody black & white 1940s cinema aesthetic |
+| Expressionist | `expressionist` | Bold emotional distortion like Edvard Munch |
+| Psychedelic | `psychedelic` | Trippy 60s colorful swirls and optical illusions |
 
-### Fun (3 styles)
+### Fun (11 styles)
 | Style | ID | Description |
 |-------|-----|-------------|
 | Sticker Art | `sticker` | Die-cut sticker aesthetic with bold outlines and flat vibrant colors |
 | Claymation | `claymation` | Stop-motion clay style like Wallace & Gromit with charming handmade quality |
 | Street Graffiti | `graffiti` | Urban spray paint art with dripping effects and raw street energy |
+| Pixel Art | `pixel` | 8-bit retro game style with chunky pixels |
+| LEGO | `lego` | Brick-built minifigure style with plastic sheen |
+| Paper Cut | `papercut` | Layered paper craft art with visible shadows |
+| Balloon Animal | `balloon` | Twisted balloon sculpture style |
+| Plushie | `plushie` | Cute stuffed toy style with fuzzy textures |
+| Vintage Photo | `vintage` | Old timey sepia portrait with Victorian styling |
+| Steampunk | `steampunk` | Victorian brass & gears retro-futuristic aesthetic |
+| Fantasy RPG | `fantasy` | Epic D&D character art with magical effects |
 
 ---
 
@@ -215,6 +237,15 @@ Content-Type: application/json
 { "imageDataUrl": "data:image/jpeg;base64,..." }
 ```
 
+### Grokify Prompt
+
+```http
+POST /api/prompt-generate
+Content-Type: application/json
+
+{ "idea": "A dragon fighting a robot", "style": "cinematic" }
+```
+
 ---
 
 ## Project Structure
@@ -229,7 +260,9 @@ xpressionist/
 │   │   ├── fbi-profile/        # Satirical FBI report
 │   │   ├── osint-profile/      # Intelligence dossier
 │   │   ├── caricature/         # Photo → caricature
+│   │   ├── prompt-generate/    # Grokify Prompt generator
 │   │   └── upload-image/       # Vercel Blob storage
+│   ├── prompt/                 # Grokify Prompt page
 │   ├── share/[id]/             # Shareable artwork pages
 │   ├── globals.css
 │   ├── layout.tsx
@@ -240,7 +273,7 @@ xpressionist/
 │   ├── OsintReport.tsx         # OSINT dossier renderer
 │   ├── PromptHistorySidebar.tsx
 │   ├── ShareButton.tsx
-│   └── StyleSelectorModal.tsx  # 22 art style selector
+│   └── StyleSelectorModal.tsx  # 38 art style selector
 ├── db/
 │   ├── index.ts                # Neon connection
 │   └── schema.ts               # Drizzle schema
@@ -248,6 +281,7 @@ xpressionist/
 │   └── usePromptHistory.ts
 └── lib/
     ├── fetchWithTimeout.ts     # API timeout handling
+    ├── prompt-config.ts        # Grokify Prompt configuration
     ├── schemas.ts              # Zod validation schemas
     └── utils.ts
 ```
@@ -291,6 +325,7 @@ X-pressionist uses specialized AI personas powered by Grok:
 | **FBI Profiler** | `/api/fbi-profile` | Cold, clinical behavioral analyst with dark humor |
 | **OSINT Analyst** | `/api/osint-profile` | Elite intelligence analyst building comprehensive dossiers |
 | **Street Artist** | `/api/caricature` | NYC Times Square caricature artist with quick wit |
+| **Prompt Alchemist** | `/api/prompt-generate` | Expert prompt engineer transforming ideas into polished AI prompts |
 
 ---
 
@@ -309,6 +344,18 @@ git push origin feature/your-feature
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## Support
+
+X-pressionist is funded by fees from **$GROKIFY** token. 
+
+<p align="center">
+  <a href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS">
+    <img src="https://img.shields.io/badge/$GROKIFY-8F2Fvu...BAGs-10B981?style=for-the-badge" alt="$GROKIFY Token" />
+  </a>
+</p>
 
 ---
 

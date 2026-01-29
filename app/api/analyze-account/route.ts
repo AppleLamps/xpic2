@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, xAccountCache } from '@/db';
+import { getDb, xAccountCache } from '@/db';
 import { eq, gt, and } from 'drizzle-orm';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponseSchema, extractGrokContent, GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
+import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 
 // Feature flag: Set to true to enable caching
 const ENABLE_CACHING = process.env.ENABLE_CACHING === 'true';
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     // Cache lookup (only if caching is enabled)
     let cachedData: { searchResponse: unknown } | null = null;
     if (ENABLE_CACHING) {
+      const db = getDb();
       const cached = await db
         .select({ searchResponse: xAccountCache.searchResponse })
         .from(xAccountCache)
@@ -120,6 +122,14 @@ Content Guidelines:
 
       const cachedContext = JSON.stringify(cachedData.searchResponse);
 
+      const breakerKey = 'xai:analyze';
+      if (!canProceed(breakerKey)) {
+        return NextResponse.json(
+          { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+          { status: 503, headers: corsHeaders }
+        );
+      }
+
       const response = await fetchWithTimeout(
         'https://api.x.ai/v1/chat/completions',
         {
@@ -147,6 +157,7 @@ Content Guidelines:
       if (!response.ok) {
         const errorText = await response.text();
         console.error('xAI API error (cached):', response.status, errorText);
+        recordFailure(breakerKey);
         return NextResponse.json(
           { error: `xAI API error: ${response.status}`, details: errorText },
           { status: response.status, headers: corsHeaders }
@@ -158,6 +169,7 @@ Content Guidelines:
 
       if (!validationResult.success) {
         console.error('Invalid Grok API response structure:', validationResult.error);
+        recordFailure(breakerKey);
         return NextResponse.json(
           { error: 'Invalid response from Grok API' },
           { status: 500, headers: corsHeaders }
@@ -165,9 +177,18 @@ Content Guidelines:
       }
 
       imagePrompt = extractGrokContent(validationResult.data);
+      recordSuccess(breakerKey);
     } else {
       // Perform agentic search with tools
       console.log(`Performing agentic search for @${handle}${ENABLE_CACHING ? ' (cache miss)' : ' (caching disabled)'}`);
+
+      const breakerKey = 'xai:analyze';
+      if (!canProceed(breakerKey)) {
+        return NextResponse.json(
+          { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+          { status: 503, headers: corsHeaders }
+        );
+      }
 
       const response = await fetchWithTimeout(
         'https://api.x.ai/v1/responses',
@@ -235,6 +256,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
       if (!response.ok) {
         const errorText = await response.text();
         console.error('xAI API error:', response.status, errorText);
+        recordFailure(breakerKey);
         return NextResponse.json(
           { error: `xAI API error: ${response.status}`, details: errorText },
           { status: response.status, headers: corsHeaders }
@@ -246,6 +268,7 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
 
       if (!validationResult.success) {
         console.error('Invalid Grok API response structure:', validationResult.error);
+        recordFailure(breakerKey);
         return NextResponse.json(
           { error: 'Invalid response from Grok API' },
           { status: 500, headers: corsHeaders }
@@ -253,9 +276,11 @@ Based on this deep, multi-faceted analysis, create a humorous but highly relevan
       }
 
       imagePrompt = extractGrokResponsesContent(validationResult.data);
+      recordSuccess(breakerKey);
 
       // Cache the response if caching is enabled
       if (ENABLE_CACHING) {
+        const db = getDb();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
         try {
           await db

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
+import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 
 // FBI Behavioral Analysis Unit – Digital Profiler
 const systemPrompt = `You are Special Agent Dr. [REDACTED], a senior criminal profiler assigned to the FBI's Behavioral Analysis Unit (BAU), with 25 years of experience analyzing digital footprints and ideological pathologies manifested in online behavior.
@@ -93,6 +94,14 @@ export async function POST(req: NextRequest) {
 
     const today = new Date();
 
+    const breakerKey = 'xai:fbi';
+    if (!canProceed(breakerKey)) {
+      return NextResponse.json(
+        { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: corsHeaders }
+      );
+    }
+
     const response = await fetchWithTimeout(
       'https://api.x.ai/v1/responses',
       {
@@ -122,6 +131,7 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('xAI API error:', response.status, errorText);
+      recordFailure(breakerKey);
       return NextResponse.json(
         { error: `xAI API error: ${response.status}` },
         { status: response.status, headers: corsHeaders }
@@ -133,6 +143,7 @@ export async function POST(req: NextRequest) {
 
     if (!validationResult.success) {
       console.error('Invalid Grok API response structure:', validationResult.error);
+      recordFailure(breakerKey);
       return NextResponse.json(
         { error: 'Invalid response from Grok API' },
         { status: 500, headers: corsHeaders }
@@ -148,6 +159,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    recordSuccess(breakerKey);
     return NextResponse.json({ profileReport }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in fbi-profile function:', error);

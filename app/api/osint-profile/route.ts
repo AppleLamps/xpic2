@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWithTimeout, API_TIMEOUTS } from '@/lib/fetchWithTimeout';
 import { GrokResponsesApiSchema, extractGrokResponsesContent, getCorsHeaders } from '@/lib/schemas';
+import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 
 // OSINT-style Internal User Classification Analyst - Enhanced Edition
 const systemPrompt = `You are an elite OSINT analyst producing a comprehensive "Internal User Classification" dossier for a specified X (Twitter) username. You have extensive search capabilities - USE THEM AGGRESSIVELY. Conduct multiple searches, gather hundreds of posts, find viral content, and leave no stone unturned. Your goal is the most complete public profile possible.
@@ -249,6 +250,14 @@ export async function POST(req: NextRequest) {
     const today = new Date();
     const daysBack = parseInt(timeRange) || 90;
 
+    const breakerKey = 'xai:osint';
+    if (!canProceed(breakerKey)) {
+      return NextResponse.json(
+        { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: corsHeaders }
+      );
+    }
+
     const response = await fetchWithTimeout(
       'https://api.x.ai/v1/responses',
       {
@@ -288,6 +297,7 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
     if (!response.ok) {
       const errorText = await response.text();
       console.error('xAI API error:', response.status, errorText);
+      recordFailure(breakerKey);
       return NextResponse.json(
         { error: `xAI API error: ${response.status}` },
         { status: response.status, headers: corsHeaders }
@@ -299,6 +309,7 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
 
     if (!validationResult.success) {
       console.error('Invalid Grok API response structure:', validationResult.error);
+      recordFailure(breakerKey);
       return NextResponse.json(
         { error: 'Invalid response from Grok API' },
         { status: 500, headers: corsHeaders }
@@ -314,6 +325,7 @@ Do NOT produce a shallow report. Use multiple searches. Find their greatest hits
       );
     }
 
+    recordSuccess(breakerKey);
     return NextResponse.json({ osintReport }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in osint-profile function:', error);

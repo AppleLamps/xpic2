@@ -7,6 +7,7 @@ import {
     extractGeminiImage,
     getCorsHeaders,
 } from '@/lib/schemas';
+import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 
 // Image model for caricature generation
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -94,6 +95,14 @@ export async function POST(req: NextRequest) {
         console.log('Analyzing photo with Grok for caricature...');
 
         // Step 1: Send image to Grok 4.1 for analysis and prompt generation
+        const grokBreakerKey = 'xai:caricature';
+        if (!canProceed(grokBreakerKey)) {
+            return NextResponse.json(
+                { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+                { status: 503, headers: corsHeaders }
+            );
+        }
+
         const grokResponse = await fetchWithTimeout(
             'https://api.x.ai/v1/chat/completions',
             {
@@ -130,6 +139,7 @@ export async function POST(req: NextRequest) {
         if (!grokResponse.ok) {
             const errorText = await grokResponse.text();
             console.error('Grok API error:', grokResponse.status, errorText);
+            recordFailure(grokBreakerKey);
             return NextResponse.json(
                 { error: `Failed to analyze image: ${grokResponse.status}` },
                 { status: 500, headers: corsHeaders }
@@ -141,6 +151,7 @@ export async function POST(req: NextRequest) {
 
         if (!grokValidation.success) {
             console.error('Invalid Grok response:', grokValidation.error);
+            recordFailure(grokBreakerKey);
             return NextResponse.json(
                 { error: 'Invalid response from Grok API' },
                 { status: 500, headers: corsHeaders }
@@ -149,6 +160,7 @@ export async function POST(req: NextRequest) {
 
         const grokContent = extractGrokContent(grokValidation.data);
         console.log('Grok analysis complete:', grokContent.substring(0, 200));
+        recordSuccess(grokBreakerKey);
 
         // Parse the JSON response from Grok
         let analysisResult: { comment: string; prompt: string };
@@ -182,6 +194,14 @@ export async function POST(req: NextRequest) {
         console.log('Using prompt:', analysisResult.prompt);
 
         // Step 2: Generate the caricature image with Gemini using the prompt + original image
+        const openRouterBreakerKey = 'openrouter:caricature';
+        if (!canProceed(openRouterBreakerKey)) {
+            return NextResponse.json(
+                { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+                { status: 503, headers: corsHeaders }
+            );
+        }
+
         const geminiResponse = await fetchWithTimeout(
             'https://openrouter.ai/api/v1/chat/completions',
             {
@@ -228,6 +248,7 @@ IMPORTANT STYLE REQUIREMENTS:
         if (!geminiResponse.ok) {
             const errorText = await geminiResponse.text();
             console.error('Gemini API error:', geminiResponse.status, errorText);
+            recordFailure(openRouterBreakerKey);
             return NextResponse.json(
                 { error: `Failed to generate caricature: ${geminiResponse.status}` },
                 { status: 500, headers: corsHeaders }
@@ -240,6 +261,7 @@ IMPORTANT STYLE REQUIREMENTS:
         if (!geminiValidation.success) {
             console.error('Invalid Gemini response:', geminiValidation.error);
             console.log('Raw response:', JSON.stringify(geminiRawData).substring(0, 500));
+            recordFailure(openRouterBreakerKey);
             return NextResponse.json(
                 { error: 'Invalid response from image generator' },
                 { status: 500, headers: corsHeaders }
@@ -258,6 +280,7 @@ IMPORTANT STYLE REQUIREMENTS:
 
         if (!imageResult || !('url' in imageResult)) {
             console.error('No image URL in response');
+            recordFailure(openRouterBreakerKey);
             return NextResponse.json(
                 { error: 'Failed to generate caricature image' },
                 { status: 500, headers: corsHeaders }
@@ -265,6 +288,7 @@ IMPORTANT STYLE REQUIREMENTS:
         }
 
         console.log('Caricature generated successfully!');
+        recordSuccess(openRouterBreakerKey);
 
         return NextResponse.json(
             {

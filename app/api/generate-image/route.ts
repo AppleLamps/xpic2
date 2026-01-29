@@ -7,6 +7,7 @@ import {
   extractGrokContent,
   getCorsHeaders,
 } from '@/lib/schemas';
+import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
 
 // Image model
 const IMAGE_MODEL = 'google/gemini-3-pro-image-preview';
@@ -124,8 +125,64 @@ ${basePrompt}
 Remember: NO MISSPELLINGS in any text. When in doubt, use visual symbols instead of words.`;
 };
 
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const RETRY_DELAYS_MS = [500, 1500, 3000];
+
+// Check if an error is a retryable network error (socket closed, connection reset, etc.)
+const isRetryableNetworkError = (error: unknown): boolean => {
+  if (error instanceof TypeError) {
+    const message = error.message.toLowerCase();
+    return message.includes('terminated') || message.includes('aborted') || message.includes('network');
+  }
+  if (error instanceof Error) {
+    const cause = (error as Error & { cause?: Error }).cause;
+    if (cause?.message?.toLowerCase().includes('socket')) return true;
+  }
+  return false;
+};
+
+const fetchWithRetry = async (url: string, init: RequestInit, timeoutMs: number): Promise<Response> => {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(url, init, timeoutMs);
+
+      if (response.ok || !RETRYABLE_STATUS.has(response.status)) {
+        return response;
+      }
+
+      console.log(`Retryable HTTP status ${response.status}, attempt ${attempt + 1}`);
+    } catch (error) {
+      // Retry on network errors (socket closed, terminated, etc.)
+      if (isRetryableNetworkError(error)) {
+        console.log(`Network error on attempt ${attempt + 1}, will retry:`, error instanceof Error ? error.message : error);
+        lastError = error instanceof Error ? error : new Error(String(error));
+      } else {
+        throw error;
+      }
+    }
+
+    if (attempt < RETRY_DELAYS_MS.length) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+    }
+  }
+
+  // If we exhausted retries due to network errors, throw the last error
+  if (lastError) {
+    throw lastError;
+  }
+
+  return fetchWithTimeout(url, init, timeoutMs);
+};
+
 // Generate a safer prompt using Grok directly (avoids self-referential API call issues in serverless)
 const generateSaferPromptWithGrok = async (handle: string, originalPrompt: string): Promise<string> => {
+  const breakerKey = 'xai:safety-rewrite';
+  if (!canProceed(breakerKey)) {
+    throw new Error('Safety rewrite service is temporarily unavailable');
+  }
+
   const xaiApiKey = process.env.XAI_API_KEY;
   if (!xaiApiKey) {
     throw new Error('XAI_API_KEY is not configured for safety rewrite');
@@ -172,6 +229,7 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
   if (!response.ok) {
     const errorText = await response.text();
     console.error('xAI API error for safety rewrite:', response.status, errorText);
+    recordFailure(breakerKey);
     throw new Error(`Failed to generate safer prompt: ${response.status}`);
   }
 
@@ -180,14 +238,17 @@ Output ONLY the rewritten prompt. No explanations, no preamble.`;
 
   if (!validationResult.success) {
     console.error('Invalid Grok response for safety rewrite:', validationResult.error);
+    recordFailure(breakerKey);
     throw new Error('Invalid response from Grok API');
   }
 
   const saferPrompt = extractGrokContent(validationResult.data);
   if (!saferPrompt) {
+    recordFailure(breakerKey);
     throw new Error('No content in Grok safety rewrite response');
   }
 
+  recordSuccess(breakerKey);
   console.log('Generated safer prompt:', saferPrompt);
   return saferPrompt;
 };
@@ -202,12 +263,12 @@ export async function POST(req: NextRequest) {
   try {
     const { prompt, handle, style } = await req.json();
 
-    // Validate X handle format (1-15 alphanumeric characters + underscores)
-    const HANDLE_REGEX = /^[a-zA-Z0-9_]{1,15}$/;
+    // Validate handle format - allows single handles (1-15 chars) or combined handles for joint pics (up to 31 chars: handle1_handle2)
+    const HANDLE_REGEX = /^[a-zA-Z0-9_]{1,31}$/;
     if (!handle || !HANDLE_REGEX.test(handle)) {
       console.error('Invalid handle format:', handle);
       return NextResponse.json(
-        { error: 'Invalid X handle format. Handles must be 1-15 characters and contain only letters, numbers, and underscores.' },
+        { error: 'Invalid handle format.' },
         { status: 400, headers: corsHeaders }
       );
     }
@@ -245,7 +306,12 @@ export async function POST(req: NextRequest) {
         console.log('Enhanced prompt:', finalPrompt);
       }
 
-      const response = await fetchWithTimeout(
+      const breakerKey = 'openrouter:image';
+      if (!canProceed(breakerKey)) {
+        throw new Error('Image generation service is temporarily unavailable');
+      }
+
+      const response = await fetchWithRetry(
         'https://openrouter.ai/api/v1/chat/completions',
         {
           method: 'POST',
@@ -272,6 +338,7 @@ export async function POST(req: NextRequest) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('OpenRouter API error:', response.status, errorText);
+        recordFailure(breakerKey);
         throw new Error(`OpenRouter API error: ${response.status}`);
       }
 
@@ -282,6 +349,7 @@ export async function POST(req: NextRequest) {
       if (!validationResult.success) {
         console.error('Invalid Gemini API response structure:', validationResult.error);
         console.log('Raw response:', JSON.stringify(rawData).substring(0, 500));
+        recordFailure(breakerKey);
 
         // Treat validation failure as potential safety block - retry with safer prompt
         if (!isRetry) {
@@ -309,9 +377,11 @@ export async function POST(req: NextRequest) {
 
       if (!imageResult || !('url' in imageResult)) {
         console.error('No image URL in validated response');
+        recordFailure(breakerKey);
         throw new Error('Failed to generate image - no image URL in response');
       }
 
+      recordSuccess(breakerKey);
       console.log('Image generated successfully');
       return imageResult.url;
     };

@@ -13,6 +13,12 @@ import {
   type JsonPromptPayload,
   type StructuredPayload,
 } from '@/lib/prompt-config';
+import { canProceed, recordFailure, recordSuccess } from '@/lib/circuit-breaker';
+
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+  Pragma: 'no-cache',
+};
 
 // Types
 interface GenerateRequestBody {
@@ -114,7 +120,34 @@ async function makeOpenRouterCall(
   }
 }
 
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+const RETRY_DELAYS_MS = [250, 750];
+
+async function makeOpenRouterCallWithRetry(
+  apiKey: string,
+  body: OpenRouterRequestBody,
+  title: string = 'Grokify Prompt Generator'
+): Promise<Response> {
+  let lastResponse: Response | null = null;
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    lastResponse = await makeOpenRouterCall(apiKey, body, title);
+
+    if (lastResponse.ok || !RETRYABLE_STATUS.has(lastResponse.status)) {
+      return lastResponse;
+    }
+
+    if (attempt < RETRY_DELAYS_MS.length) {
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+    }
+  }
+
+  return lastResponse ?? makeOpenRouterCall(apiKey, body, title);
+}
+
 export async function POST(request: NextRequest) {
+  const breakerKey = 'openrouter:prompt';
+
   try {
     const body: GenerateRequestBody = await request.json();
 
@@ -132,21 +165,21 @@ export async function POST(request: NextRequest) {
     if (idea.length > PROMPT_CONFIG.IDEA_MAX_LENGTH) {
       return NextResponse.json(
         { error: `Idea must be under ${PROMPT_CONFIG.IDEA_MAX_LENGTH} characters.` },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
     if (directions.length > PROMPT_CONFIG.DIRECTIONS_MAX_LENGTH) {
       return NextResponse.json(
         { error: `Directions must be under ${PROMPT_CONFIG.DIRECTIONS_MAX_LENGTH} characters.` },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
     if (!idea.trim() && !imageBase64) {
       return NextResponse.json(
         { error: 'Either an "idea" or an image must be provided' },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -155,7 +188,7 @@ export async function POST(request: NextRequest) {
       console.error('OPENROUTER_API_KEY environment variable is not set');
       return NextResponse.json(
         { error: 'API key is not configured. Please contact the administrator.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -210,22 +243,30 @@ export async function POST(request: NextRequest) {
       response_format: responseFormat,
     };
 
-    const openRouterResponse = await makeOpenRouterCall(apiKey, requestBody);
+    if (!canProceed(breakerKey)) {
+      return NextResponse.json(
+        { error: 'The AI service is temporarily unavailable. Please try again shortly.' },
+        { status: 503, headers: NO_STORE_HEADERS }
+      );
+    }
+
+    const openRouterResponse = await makeOpenRouterCallWithRetry(apiKey, requestBody);
 
     if (!openRouterResponse.ok) {
       const errorText = await openRouterResponse.text();
       console.error('OpenRouter API error:', openRouterResponse.status, errorText);
+      recordFailure(breakerKey);
 
       if (openRouterResponse.status === 429) {
         return NextResponse.json(
           { error: 'Too many requests. Please wait a moment before trying again.' },
-          { status: 429 }
+          { status: 429, headers: NO_STORE_HEADERS }
         );
       }
 
       return NextResponse.json(
         { error: 'The AI service is currently unavailable. Please try again later.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -235,7 +276,7 @@ export async function POST(request: NextRequest) {
       console.error('Invalid OpenRouter API response structure:', data);
       return NextResponse.json(
         { error: 'Received an invalid response from the AI service. Please try again.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -246,7 +287,7 @@ export async function POST(request: NextRequest) {
       console.error('Failed to parse structured response:', parseError);
       return NextResponse.json(
         { error: 'The AI service returned a malformed response. Please try again.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -259,35 +300,38 @@ export async function POST(request: NextRequest) {
       console.error('Structured response validation failed:', validationError);
       return NextResponse.json(
         { error: 'The AI service returned an invalid response. Please try again.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       );
     }
 
     if (!isJsonMode && !finalPrompt) {
       return NextResponse.json(
         { error: 'The AI service returned an empty response. Please try again with different input.' },
-        { status: 500 }
+        { status: 500, headers: NO_STORE_HEADERS }
       );
     }
+
+    recordSuccess(breakerKey);
 
     return NextResponse.json({
       success: true,
       prompt: finalPrompt,
       usage: data.usage || null,
-    });
+    }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error('API Route Error:', error);
+    recordFailure(breakerKey);
 
     if (error instanceof Error && error.name === 'AbortError') {
       return NextResponse.json(
         { error: 'The AI service took too long to respond. Please try again.' },
-        { status: 504 }
+        { status: 504, headers: NO_STORE_HEADERS }
       );
     }
 
     return NextResponse.json(
       { error: 'An unexpected error occurred. Please try again later.' },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }

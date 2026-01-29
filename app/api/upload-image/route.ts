@@ -4,6 +4,10 @@ import { customAlphabet } from 'nanoid';
 
 // Use alphanumeric only (no underscores or dashes) to avoid filename parsing issues
 const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', 10);
+const NO_STORE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+  Pragma: 'no-cache',
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!imageDataUrl) {
       return NextResponse.json(
         { error: 'No image data provided' },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -21,7 +25,7 @@ export async function POST(req: NextRequest) {
     if (!base64Match) {
       return NextResponse.json(
         { error: 'Invalid image data format' },
-        { status: 400 }
+        { status: 400, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -49,12 +53,12 @@ export async function POST(req: NextRequest) {
       imageId,
       imageUrl: blob.url,
       shareUrl: `/share/${imageId}`,
-    });
+    }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
       { error: 'Failed to upload image' },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }
@@ -67,7 +71,7 @@ export async function GET(req: NextRequest) {
   if (!imageId) {
     return NextResponse.json(
       { error: 'No image ID provided' },
-      { status: 400 }
+      { status: 400, headers: NO_STORE_HEADERS }
     );
   }
 
@@ -81,7 +85,7 @@ export async function GET(req: NextRequest) {
     if (blobs.length === 0) {
       return NextResponse.json(
         { error: 'Image not found' },
-        { status: 404 }
+        { status: 404, headers: NO_STORE_HEADERS }
       );
     }
 
@@ -96,13 +100,12 @@ export async function GET(req: NextRequest) {
       url: blob.url,
       username,
       uploadedAt: blob.uploadedAt,
-    });
+    }, { headers: NO_STORE_HEADERS });
   } catch (error) {
     console.error('Get image error:', error);
     return NextResponse.json(
       { error: 'Failed to retrieve image' },
-      { status: 500 }
+      { status: 500, headers: NO_STORE_HEADERS }
     );
   }
 }
-

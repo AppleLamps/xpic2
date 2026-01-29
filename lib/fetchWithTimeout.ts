@@ -36,8 +36,8 @@ export const API_TIMEOUTS = {
   ENHANCED_ACCOUNT_ANALYSIS: 120000,
   /** xAI Grok API - comprehensive OSINT requires more time for extensive searches */
   OSINT_ANALYSIS: 180000,
-  /** OpenRouter image generation */
-  IMAGE_GENERATION: 45000,
+  /** OpenRouter image generation - increased for complex prompts */
+  IMAGE_GENERATION: 90000,
   /** GetImg.ai Flux - typically faster */
   FLUX_GENERATION: 30000,
 } as const;

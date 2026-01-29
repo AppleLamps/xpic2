@@ -52,6 +52,7 @@ No login required. No API keys needed from users. Just enter a username and go.
 X-pressionist offers **38 unique art styles** organized into 5 categories:
 
 ### Classic (8 styles)
+
 | Style | ID | Description |
 |-------|-----|-------------|
 | MAD Magazine | `default` | Bold satirical cartoon style with vibrant colors and exaggerated expressions |
@@ -64,6 +65,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | Art Deco | `artdeco` | 1920s geometric elegance with luxurious gold and black colors |
 
 ### Anime (7 styles)
+
 | Style | ID | Description |
 |-------|-----|-------------|
 | Studio Ghibli | `ghibli` | Whimsical Miyazaki fantasy style with soft pastels and warm nostalgia |
@@ -75,6 +77,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | Manhwa | `manhwa` | Korean webtoon style with clean digital linework |
 
 ### Modern (9 styles)
+
 | Style | ID | Description |
 |-------|-----|-------------|
 | Pixar 3D | `pixar` | 3D animated movie style with expressive characters and vibrant colors |
@@ -88,6 +91,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | Hyperrealistic | `hyperreal` | Ultra-detailed photorealism with perfect textures |
 
 ### Artistic (8 styles)
+
 | Style | ID | Description |
 |-------|-----|-------------|
 | Comic Book | `comic` | Bold Marvel/DC style with thick outlines, halftone dots, and action lines |
@@ -100,6 +104,7 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | Psychedelic | `psychedelic` | Trippy 60s colorful swirls and optical illusions |
 
 ### Fun (11 styles)
+
 | Style | ID | Description |
 |-------|-----|-------------|
 | Sticker Art | `sticker` | Die-cut sticker aesthetic with bold outlines and flat vibrant colors |
@@ -392,7 +397,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-X-pressionist is funded by fees from **$GROKIFY** token. 
+X-pressionist is funded by fees from **$GROKIFY** token.
 
 <p align="center">
   <a href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS">

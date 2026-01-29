@@ -637,8 +637,33 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
             {/* Left: Title & Description */}
             <div className="space-y-6 text-center lg:text-left">
+              {/* Title - centered on mobile */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
+                <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
+                  <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                </svg>
+                <span className="gradient-text">pressionist</span>
+              </h1>
+
+              {/* Description - centered on mobile */}
+              <p className="text-base sm:text-lg md:text-xl text-neutral-300 max-w-md mx-auto lg:mx-0 leading-relaxed tracking-tight">
+                Turn any X timeline into bespoke AI artwork.<br />
+                No login. No API keys. Just a username.
+              </p>
+
+              {/* Funded by $GROKIFY - centered on mobile */}
+              <a
+                href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-base sm:text-lg text-neutral-400 hover:text-emerald-400 transition-colors inline-flex items-center justify-center lg:justify-start gap-2 group w-full lg:w-auto"
+              >
+                <DollarSign className="w-5 h-5 group-hover:text-emerald-400 transition-colors" />
+                Funded by fees from <span className="font-bold text-emerald-400 group-hover:text-emerald-300">$GROKIFY</span>
+              </a>
+
               {/* Badges - centered on mobile */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-4">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-amber-400/90 backdrop-blur-sm">
                   <Flame className="w-3 h-3" />
                   Powered by Grok AI
@@ -695,31 +720,6 @@ export default function Home() {
                   </p>
                 </Link>
               </div>
-
-              {/* Title - centered on mobile */}
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
-                <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
-                  <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-                </svg>
-                <span className="gradient-text">pressionist</span>
-              </h1>
-
-              {/* Description - centered on mobile */}
-              <p className="text-base sm:text-lg md:text-xl text-neutral-300 max-w-md mx-auto lg:mx-0 leading-relaxed tracking-tight">
-                Turn any X timeline into bespoke AI artwork.<br />
-                No login. No API keys. Just a username.
-              </p>
-
-              {/* Funded by $GROKIFY - centered on mobile */}
-              <a
-                href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-base sm:text-lg text-neutral-400 hover:text-emerald-400 transition-colors inline-flex items-center justify-center lg:justify-start gap-2 group w-full lg:w-auto"
-              >
-                <DollarSign className="w-5 h-5 group-hover:text-emerald-400 transition-colors" />
-                Funded by fees from <span className="font-bold text-emerald-400 group-hover:text-emerald-300">$GROKIFY</span>
-              </a>
 
               {/* Caricature Upload Modal */}
               <Dialog open={isCaricatureModalOpen} onOpenChange={(open) => {

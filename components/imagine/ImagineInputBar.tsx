@@ -26,6 +26,7 @@ interface ImagineInputBarProps {
         imageCount: number;
         videoDuration: number;
         editImageBase64?: string | null;
+        editVideoBase64?: string | null;
     }) => void;
     onCancel: () => void;
     onSelectFolder: (id: string | null) => void;
@@ -47,6 +48,7 @@ export default function ImagineInputBar({
     const [imageCount, setImageCount] = useState(2);
     const [videoDuration, setVideoDuration] = useState(5);
     const [editImage, setEditImage] = useState<string | null>(null);
+    const [editVideo, setEditVideo] = useState<string | null>(null);
 
     const [showAspectDropdown, setShowAspectDropdown] = useState(false);
     const [showFolderDropdown, setShowFolderDropdown] = useState(false);
@@ -72,22 +74,31 @@ export default function ImagineInputBar({
             imageCount: editImage ? 1 : imageCount,
             videoDuration,
             editImageBase64: editImage,
+            editVideoBase64: editVideo,
         });
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            setEditImage(event.target?.result as string);
+            const result = event.target?.result as string;
+            if (file.type.startsWith('video/')) {
+                setEditVideo(result);
+                setEditImage(null);
+            } else {
+                setEditImage(result);
+                setEditVideo(null);
+            }
         };
         reader.readAsDataURL(file);
     };
 
-    const clearEditImage = () => {
+    const clearAttachment = () => {
         setEditImage(null);
+        setEditVideo(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
@@ -98,19 +109,19 @@ export default function ImagineInputBar({
             <div className="imagine-input-bar__container">
                 {/* Input Row */}
                 <div className="imagine-input-bar__row">
-                    {/* Attach image button - for image editing or image-to-video */}
+                    {/* Attach file button - for image editing, image-to-video, or video editing */}
                     <>
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/*"
+                            accept={type === 'video' ? 'image/*,video/*' : 'image/*'}
                             className="hidden"
-                            onChange={handleImageUpload}
+                            onChange={handleFileUpload}
                         />
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             className="imagine-input-bar__icon-btn"
-                            title={type === 'video' ? 'Add image for image-to-video' : 'Attach image for editing'}
+                            title={type === 'video' ? 'Add image/video (image-to-video or video edit)' : 'Attach image for editing'}
                             disabled={isGenerating}
                         >
                             <Upload className="w-5 h-5" />
@@ -135,12 +146,16 @@ export default function ImagineInputBar({
                     />
                 </div>
 
-                {/* Edit image preview */}
-                {editImage && (
+                {/* Edit image/video preview */}
+                {(editImage || editVideo) && (
                     <div className="imagine-input-bar__attachment">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={editImage} alt="Edit" className="imagine-input-bar__attachment-img" />
-                        <button onClick={clearEditImage} className="imagine-input-bar__attachment-remove">
+                        {editImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={editImage} alt="Edit" className="imagine-input-bar__attachment-img" />
+                        ) : editVideo ? (
+                            <video src={editVideo} className="imagine-input-bar__attachment-img" muted />
+                        ) : null}
+                        <button onClick={clearAttachment} className="imagine-input-bar__attachment-remove">
                             <X className="w-3 h-3" />
                         </button>
                     </div>

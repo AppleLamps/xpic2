@@ -14,6 +14,12 @@ const nextConfig = {
   outputFileTracingExcludes: {
     '*': ['./grok-4-prompt/**/*'],
   },
+  // Allow larger request bodies for image/video editing
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
 };
 
 module.exports = nextConfig;

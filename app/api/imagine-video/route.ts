@@ -21,6 +21,7 @@ const VideoRequestSchema = z.object({
     aspectRatio: z.enum(['16:9', '9:16', '4:3', '3:4', '1:1', '3:2', '2:3']).optional().default('16:9'),
     resolution: z.enum(['720p', '480p']).optional().default('720p'),
     imageUrl: z.string().url().optional(), // For image-to-video
+    videoUrl: z.string().url().optional(), // For video editing
 });
 
 // Response schema for video generation request
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { prompt, duration, aspectRatio, resolution, imageUrl } = validationResult.data;
+        const { prompt, duration, aspectRatio, resolution, imageUrl, videoUrl } = validationResult.data;
 
         // Check circuit breaker
         if (!canProceed(breakerKey)) {
@@ -77,25 +78,39 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        console.log(`Starting video generation with Grok Imagine, duration: ${duration}s, aspect ratio: ${aspectRatio}`);
+        // Determine if this is an edit request
+        const isEditRequest = !!videoUrl;
+        const endpoint = isEditRequest
+            ? 'https://api.x.ai/v1/videos/edits'
+            : 'https://api.x.ai/v1/videos/generations';
+
+        console.log(`Starting video ${isEditRequest ? 'edit' : 'generation'} with Grok Imagine, duration: ${duration}s, aspect ratio: ${aspectRatio}`);
 
         // Build request body
         const requestBody: Record<string, unknown> = {
             model: VIDEO_MODEL,
             prompt,
-            duration,
             aspect_ratio: aspectRatio,
             resolution,
         };
 
+        // Only add duration for generation (not edits - edited video keeps original duration)
+        if (!isEditRequest) {
+            requestBody.duration = duration;
+        }
+
+        // Add video URL for editing
+        if (videoUrl) {
+            requestBody.video = { url: videoUrl };
+        }
         // Add image URL if provided (for image-to-video)
-        if (imageUrl) {
+        else if (imageUrl) {
             requestBody.image = { url: imageUrl };
         }
 
-        // Step 1: Send video generation request
+        // Step 1: Send video generation/edit request
         const startResponse = await fetchWithTimeout(
-            'https://api.x.ai/v1/videos/generations',
+            endpoint,
             {
                 method: 'POST',
                 headers: {

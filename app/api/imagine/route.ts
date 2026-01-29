@@ -77,12 +77,16 @@ export async function POST(req: NextRequest) {
             : 'https://api.x.ai/v1/images/generations';
 
         console.log(`${isEditRequest ? 'Editing' : 'Generating'} ${n} image(s) with Grok Imagine, aspect ratio: ${aspect_ratio}`);
+        if (isEditRequest && imageBase64) {
+            console.log(`Image data length: ${imageBase64.length} chars`);
+            console.log(`Image data prefix: ${imageBase64.substring(0, 50)}...`);
+        }
 
         // Build request body
         const requestBody: Record<string, unknown> = {
             model: IMAGE_MODEL,
             prompt,
-            response_format,
+            response_format, // Request base64 for both generation and edits
         };
 
         // Only add n and aspect_ratio for generation (not edits)
@@ -91,12 +95,20 @@ export async function POST(req: NextRequest) {
             requestBody.aspect_ratio = aspect_ratio;
         }
 
-        // Add image for editing
+        // Add image for editing - xAI expects { url: "..." } format
         if (imageUrl) {
-            requestBody.image = imageUrl;
+            requestBody.image = { url: imageUrl };
         } else if (imageBase64) {
-            requestBody.image = imageBase64;
+            // imageBase64 is a data URL like "data:image/png;base64,ABC..."
+            // xAI expects image to be an object with url property
+            requestBody.image = { url: imageBase64 };
+            console.log('Using data URL format for image edit');
         }
+
+        console.log(`Sending request to ${endpoint}, request body keys: ${Object.keys(requestBody).join(', ')}`);
+
+        const requestBodyJson = JSON.stringify(requestBody);
+        console.log(`Request body size: ${requestBodyJson.length} bytes`);
 
         const response = await fetchWithTimeout(
             endpoint,
@@ -106,14 +118,15 @@ export async function POST(req: NextRequest) {
                     Authorization: `Bearer ${xaiApiKey}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(requestBody),
+                body: requestBodyJson,
             },
             IMAGE_TIMEOUT
         );
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('xAI Image API error:', response.status, errorText);
+            // Truncate error text to avoid spamming console with large responses
+            console.error('xAI Image API error:', response.status, errorText.substring(0, 500));
             recordFailure(breakerKey);
 
             // Parse error message if possible

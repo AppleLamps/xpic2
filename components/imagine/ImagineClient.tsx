@@ -34,6 +34,7 @@ export default function ImagineClient() {
             imageCount: number;
             videoDuration: number;
             editImageBase64?: string | null;
+            editVideoBase64?: string | null;
         }) => {
             if (isGenerating) return;
             setIsGenerating(true);
@@ -44,9 +45,24 @@ export default function ImagineClient() {
 
             try {
                 if (isVideo) {
-                    // If image is attached, upload it first to get a URL for image-to-video
+                    // If video is attached, upload it first for video editing
+                    let videoUrl: string | undefined;
+                    // If image is attached, upload it first for image-to-video
                     let imageUrl: string | undefined;
-                    if (settings.editImageBase64) {
+
+                    if (settings.editVideoBase64) {
+                        const uploadRes = await fetch('/api/upload-video', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ videoDataUrl: settings.editVideoBase64 }),
+                            signal: abortControllerRef.current.signal,
+                        });
+                        if (!uploadRes.ok) {
+                            throw new Error('Failed to upload video for editing');
+                        }
+                        const uploadData = await uploadRes.json();
+                        videoUrl = uploadData.videoUrl;
+                    } else if (settings.editImageBase64) {
                         const uploadRes = await fetch('/api/upload-image', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -67,6 +83,7 @@ export default function ImagineClient() {
                             prompt: settings.prompt,
                             aspect_ratio: settings.aspectRatio,
                             duration: settings.videoDuration,
+                            ...(videoUrl && { videoUrl }),
                             ...(imageUrl && { imageUrl }),
                         }),
                         signal: abortControllerRef.current.signal,

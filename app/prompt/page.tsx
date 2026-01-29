@@ -1,0 +1,787 @@
+'use client';
+
+import { useState, useCallback, useRef, useMemo } from 'react';
+import Link from 'next/link';
+import {
+  ArrowLeft,
+  Upload,
+  Trash2,
+  Shuffle,
+  Zap,
+  Copy,
+  Check,
+  ChevronDown,
+  HelpCircle,
+  X,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { STYLE_PRESETS, PROMPT_CONFIG, type JsonPromptPayload } from '@/lib/prompt-config';
+
+// Types
+type CopyTarget = 'default' | 'json' | 'scene' | '';
+
+export default function PromptPage() {
+  // Form state
+  const [idea, setIdea] = useState('');
+  const [directions, setDirections] = useState('');
+  const [activeStyles, setActiveStyles] = useState<Set<string>>(new Set());
+  const [showStylePresets, setShowStylePresets] = useState(false);
+
+  // Image state
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageMimeType, setImageMimeType] = useState<string>('image/png');
+  const [isCompressing, setIsCompressing] = useState(false);
+
+  // Config flags
+  const [isJsonMode, setIsJsonMode] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
+  const [isVideoPrompt, setIsVideoPrompt] = useState(false);
+
+  // Output state
+  const [generatedPrompt, setGeneratedPrompt] = useState<string | JsonPromptPayload | null>(null);
+  const [showOutput, setShowOutput] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSurpriseLoading, setIsSurpriseLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copiedType, setCopiedType] = useState<CopyTarget>('');
+
+  // Help modal state
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Refs
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
+
+  // Computed directions with styles
+  const directionsWithStyles = useMemo(() => {
+    const base = (directions || '').trim();
+    const styleText = Array.from(activeStyles)
+      .map((name) => STYLE_PRESETS[name])
+      .filter(Boolean)
+      .join(', ');
+    if (base && styleText) return `${base}, ${styleText}`;
+    return base || styleText || '';
+  }, [directions, activeStyles]);
+
+  // Toggle style preset
+  const toggleStyle = useCallback((styleName: string) => {
+    if (!STYLE_PRESETS[styleName]) return;
+    setActiveStyles((prev) => {
+      const next = new Set(prev);
+      if (next.has(styleName)) {
+        next.delete(styleName);
+      } else {
+        next.add(styleName);
+      }
+      return next;
+    });
+  }, []);
+
+  // Handle image upload
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!file || !file.type.startsWith('image/')) {
+      setError('Please upload a valid image file.');
+      return;
+    }
+
+    if (file.size > PROMPT_CONFIG.IMAGE_MAX_SIZE) {
+      setError('Image file size must be less than 10MB.');
+      return;
+    }
+
+    setError('');
+    setIsCompressing(true);
+
+    try {
+      // Create preview
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+      setImageMimeType(file.type);
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        // Remove the data URL prefix to get just the base64 string
+        const base64 = result.split(',')[1];
+        setImageBase64(base64);
+        setIsCompressing(false);
+      };
+      reader.onerror = () => {
+        setError('Failed to read image file.');
+        setIsCompressing(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Error processing image:', err);
+      setError('Error processing image.');
+      setIsCompressing(false);
+    }
+  }, []);
+
+  // Remove image
+  const handleImageRemove = useCallback(() => {
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview(null);
+    setImageBase64(null);
+  }, [imagePreview]);
+
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!idea.trim() && !imageBase64) {
+      setError('Please enter an idea or upload an image.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+    setShowOutput(false);
+
+    try {
+      const response = await fetch('/api/prompt-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idea: idea.trim(),
+          directions: directionsWithStyles,
+          isJsonMode,
+          isTestMode,
+          isVideoPrompt,
+          imageBase64,
+          imageMimeType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate prompt');
+      }
+
+      setGeneratedPrompt(data.prompt);
+      setShowOutput(true);
+      toast.success('Prompt generated!');
+
+      // Scroll to output
+      setTimeout(() => {
+        outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    } catch (err) {
+      console.error('Generation error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle surprise/random
+  const handleSurpriseMe = async () => {
+    setIsSurpriseLoading(true);
+    setError('');
+    setShowOutput(false);
+
+    // Generate a random creative idea
+    const randomIdeas = [
+      'A cyberpunk samurai standing on a neon-lit rooftop in Tokyo',
+      'An ancient library floating in the clouds at sunset',
+      'A mechanical dragon made of brass and clockwork parts',
+      'A lone astronaut discovering an alien garden on Mars',
+      'A steampunk airship navigating through a storm',
+      'A mystical forest with bioluminescent trees and floating spirits',
+      'A futuristic city built inside a giant crystal cave',
+      'An underwater kingdom with merpeople and ancient ruins',
+      'A phoenix rising from volcanic ashes at dawn',
+      'A time traveler in Victorian London meeting their past self',
+    ];
+
+    const randomIdea = randomIdeas[Math.floor(Math.random() * randomIdeas.length)];
+
+    try {
+      const response = await fetch('/api/prompt-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idea: randomIdea,
+          directions: '',
+          isJsonMode: false,
+          isTestMode: false,
+          isVideoPrompt: false,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate surprise prompt');
+      }
+
+      setIdea(randomIdea);
+      setGeneratedPrompt(data.prompt);
+      setShowOutput(true);
+      toast.success('Surprise prompt generated!');
+
+      setTimeout(() => {
+        outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 100);
+    } catch (err) {
+      console.error('Surprise error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsSurpriseLoading(false);
+    }
+  };
+
+  // Clear all
+  const handleClearAll = () => {
+    setIdea('');
+    setDirections('');
+    setActiveStyles(new Set());
+    setGeneratedPrompt(null);
+    setError('');
+    setShowOutput(false);
+    handleImageRemove();
+  };
+
+  // Copy functions
+  const copyToClipboard = async (text: string, type: CopyTarget) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedType(type);
+      toast.success('Copied to clipboard!');
+      setTimeout(() => setCopiedType(''), 2000);
+    } catch {
+      toast.error('Failed to copy to clipboard');
+    }
+  };
+
+  const handleCopyDefault = () => {
+    if (!generatedPrompt) return;
+    const text = typeof generatedPrompt === 'string'
+      ? generatedPrompt
+      : JSON.stringify(generatedPrompt, null, 2);
+    copyToClipboard(text, 'default');
+  };
+
+  const handleCopyJson = () => {
+    if (!generatedPrompt) return;
+    copyToClipboard(JSON.stringify(generatedPrompt, null, 2), 'json');
+  };
+
+  const handleCopyScene = () => {
+    if (!generatedPrompt || typeof generatedPrompt === 'string') return;
+    copyToClipboard(generatedPrompt.scene, 'scene');
+  };
+
+  const isAnyLoading = isLoading || isSurpriseLoading;
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-200">
+      {/* Header */}
+      <header className="border-b border-amber-500/20 bg-black/30">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back to X-pressionist</span>
+            </Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs sm:text-sm font-mono text-amber-500 hover:text-amber-400 transition-colors animate-pulse text-glow-amber"
+            >
+              <span className="hidden sm:inline">CA: 8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS</span>
+              <span className="sm:hidden">CA: 8F2F...BAGS</span>
+            </a>
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-yellow-400 text-glow-yellow">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse dot-glow-green" />
+              ONLINE
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        {/* Title */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold font-mono text-amber-500 mb-2 text-glow-amber-lg">
+            <span className="text-gray-500">// </span>GROKIFY_PROMPT
+            <span className="text-amber-400"> v2.0</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 font-mono uppercase tracking-wider">
+            GROK IMAGINE PROMPTS
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left Column - Primary Inputs */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Section 01: Primary Input */}
+              <div className="p-5 bg-black/20 border border-amber-500/15">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">
+                  01 // PRIMARY_INPUT_DATA
+                </h2>
+                <textarea
+                  value={idea}
+                  onChange={(e) => setIdea(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[100px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600"
+                  placeholder="ENTER_CONCEPT_DESCRIPTION..."
+                  maxLength={1000}
+                  disabled={isAnyLoading}
+                />
+                <div className="mt-2 text-xs text-gray-600 font-mono">
+                  {idea.length}/1000 CHARS
+                </div>
+              </div>
+
+              {/* Section 02: Modifiers */}
+              <div className="p-5 bg-black/20 border border-amber-500/15">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">
+                  02 // MODIFIERS
+                </h2>
+                <textarea
+                  value={directions}
+                  onChange={(e) => setDirections(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-black/40 border border-white/10 text-gray-200 font-mono resize-none min-h-[80px] focus:outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10 transition-all placeholder:text-gray-600"
+                  placeholder="STYLE_PARAMS: cinematic, cyberpunk | MOOD: mysterious..."
+                  maxLength={500}
+                  disabled={isAnyLoading}
+                />
+                <div className="mt-2 text-xs text-gray-600 font-mono">
+                  ACTIVE_PARAMS: {directionsWithStyles || 'NULL'}
+                </div>
+              </div>
+
+              {/* Section 03: Style Matrix */}
+              <div className="p-5 bg-black/20 border border-amber-500/15">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">
+                  03 // STYLE_MATRIX
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowStylePresets(!showStylePresets)}
+                  className="w-full px-4 py-3 text-sm text-left bg-black/40 border border-white/10 text-gray-400 font-mono cursor-pointer hover:border-amber-500/30 transition-all flex items-center justify-between"
+                >
+                  <span>SELECT_PRESETS ({activeStyles.size} ACTIVE)</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showStylePresets ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showStylePresets && (
+                  <div className="mt-3 p-4 border border-amber-500/10 bg-black/30">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {Object.keys(STYLE_PRESETS).map((styleName) => (
+                        <button
+                          key={styleName}
+                          type="button"
+                          onClick={() => toggleStyle(styleName)}
+                          className={`px-3 py-2 text-xs font-mono uppercase tracking-wider transition-all text-center ${
+                            activeStyles.has(styleName)
+                              ? 'bg-amber-500 text-black border border-amber-500'
+                              : 'bg-transparent border border-white/10 text-gray-500 hover:border-amber-500/40 hover:text-amber-500'
+                          }`}
+                        >
+                          {styleName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column - Image & Config */}
+            <div className="space-y-4">
+              {/* Image Upload */}
+              <div className="p-5 bg-black/20 border border-amber-500/15">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">
+                  04 // IMG_REFERENCE
+                </h2>
+
+                {isCompressing ? (
+                  <div className="relative flex flex-col items-center justify-center min-h-[140px] border border-dashed border-white/15 bg-black/30">
+                    <div className="w-5 h-5 border-2 border-gray-600 border-t-amber-500 rounded-full animate-spin mb-3" />
+                    <p className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+                      PROCESSING...
+                    </p>
+                  </div>
+                ) : imagePreview ? (
+                  <div className="space-y-2">
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imagePreview}
+                        alt="Upload preview"
+                        className="w-full h-36 object-cover border border-white/10"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleImageRemove}
+                        className="absolute top-2 right-2 w-8 h-8 bg-red-600 hover:bg-red-500 text-white flex items-center justify-center transition-all"
+                        aria-label="Remove image"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="relative flex flex-col items-center justify-center min-h-[140px] border border-dashed border-white/15 bg-black/30 cursor-pointer hover:border-amber-500/40 transition-all"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {/* Corner brackets */}
+                    <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30" />
+                    <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30" />
+                    <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30" />
+                    <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30" />
+
+                    <Upload className="w-8 h-8 text-gray-500 mb-3" />
+                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-300 mb-1">
+                      IMG_REF_UPLOAD
+                    </p>
+                    <p className="text-xs text-gray-600">DRAG_DROP_TARGET</p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                      className="hidden"
+                      aria-label="Upload reference image"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Config Flags */}
+              <div className="p-5 bg-black/20 border border-amber-500/15">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-4">
+                  05 // CONFIG_FLAGS
+                </h2>
+                <div className="space-y-4">
+                  {/* Emily's JSON Mode */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                        EMILY_JSON_MODE
+                      </span>
+                      <a
+                        href="https://x.com/IamEmily2050"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-xs text-gray-600 hover:text-amber-500 mt-0.5"
+                      >
+                        @IamEmily2050
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isJsonMode ? "true" : "false"}
+                      aria-label="Toggle Emily JSON Mode"
+                      onClick={() => setIsJsonMode((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-sm cursor-pointer transition-colors ${
+                        isJsonMode ? 'bg-amber-500' : 'bg-[#1a1a1a] border border-white/10'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform transition-transform ${
+                          isJsonMode ? 'translate-x-[22px] bg-black' : 'translate-x-0.5 bg-gray-200'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Test Mode */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                        TEST_ELYSIAN
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">Elysian Visions</span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isTestMode ? "true" : "false"}
+                      aria-label="Toggle Test Elysian Mode"
+                      onClick={() => setIsTestMode((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-sm cursor-pointer transition-colors ${
+                        isTestMode ? 'bg-amber-500' : 'bg-[#1a1a1a] border border-white/10'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform transition-transform ${
+                          isTestMode ? 'translate-x-[22px] bg-black' : 'translate-x-0.5 bg-gray-200'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Video Prompt */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-medium uppercase tracking-wider text-gray-400">
+                        VIDEO_SEQ
+                      </span>
+                      <span className="block text-xs text-gray-600 mt-0.5">Text-to-video</span>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isVideoPrompt ? "true" : "false"}
+                      aria-label="Toggle Video Sequence Mode"
+                      onClick={() => setIsVideoPrompt((v) => !v)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-sm cursor-pointer transition-colors ${
+                        isVideoPrompt ? 'bg-amber-500' : 'bg-[#1a1a1a] border border-white/10'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform transition-transform ${
+                          isVideoPrompt ? 'translate-x-[22px] bg-black' : 'translate-x-0.5 bg-gray-200'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Bar */}
+          <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 p-4 border border-amber-500/10 bg-black/20">
+            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleClearAll}
+                disabled={isAnyLoading}
+                className="px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-transparent border border-white/10 text-gray-400 hover:border-amber-500/40 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 className="w-4 h-4" />
+                PURGE_DATA
+              </button>
+              <button
+                type="button"
+                onClick={handleSurpriseMe}
+                disabled={isAnyLoading}
+                className={`px-4 py-3 text-xs font-semibold uppercase tracking-wider transition-all flex items-center justify-center gap-2 bg-transparent border border-white/10 text-gray-400 hover:border-amber-500/40 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isSurpriseLoading ? 'animate-pulse' : ''
+                }`}
+              >
+                {isSurpriseLoading ? (
+                  <div className="w-4 h-4 border-2 border-gray-600 border-t-amber-500 rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <Shuffle className="w-4 h-4" />
+                    RANDOMIZE_SEED
+                  </>
+                )}
+              </button>
+            </div>
+            <button
+              type="submit"
+              disabled={isAnyLoading || (!idea.trim() && !imageBase64)}
+              className={`px-8 py-4 text-sm font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                isLoading
+                  ? 'bg-gradient-to-r from-amber-700 via-amber-500 to-amber-700 bg-[length:200%_100%] animate-shimmer'
+                  : 'bg-amber-500 hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]'
+              } text-black`}
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Zap className="w-5 h-5" />
+                  EXECUTE
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mt-6 p-4 bg-red-900/30 border-l-2 border-red-500 text-red-400 font-mono text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Output Section */}
+        {showOutput && generatedPrompt && (
+          <div ref={outputRef} className="mt-6 bg-black/30 border border-amber-500/20">
+            {/* Output Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-amber-500/15">
+              <span className="text-xs font-semibold uppercase tracking-widest text-amber-500">
+                06 // OUTPUT_STREAM
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyDefault}
+                  className={`flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
+                    copiedType === 'default'
+                      ? 'bg-amber-500 text-black border-amber-500'
+                      : 'bg-transparent border border-white/10 text-gray-400 hover:border-amber-500/40 hover:text-gray-200'
+                  }`}
+                >
+                  {copiedType === 'default' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  COPY
+                </button>
+                {isJsonMode && (
+                  <>
+                    <button
+                      onClick={handleCopyJson}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
+                        copiedType === 'json'
+                          ? 'bg-amber-500 text-black border-amber-500'
+                          : 'bg-transparent border border-white/10 text-gray-400 hover:border-amber-500/40 hover:text-gray-200'
+                      }`}
+                    >
+                      {copiedType === 'json' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      JSON
+                    </button>
+                    <button
+                      onClick={handleCopyScene}
+                      className={`flex items-center justify-center gap-2 px-3 py-2 text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
+                        copiedType === 'scene'
+                          ? 'bg-amber-500 text-black border-amber-500'
+                          : 'bg-transparent border border-white/10 text-gray-400 hover:border-amber-500/40 hover:text-gray-200'
+                      }`}
+                    >
+                      {copiedType === 'scene' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      SCENE
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Output Content */}
+            <div className="p-5">
+              <pre className="text-sm leading-relaxed whitespace-pre-wrap font-mono text-gray-200">
+                {typeof generatedPrompt === 'string'
+                  ? generatedPrompt
+                  : JSON.stringify(generatedPrompt, null, 2)}
+              </pre>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-12 text-center py-6 border-t border-amber-500/15">
+          <p className="text-xs text-gray-600 font-mono uppercase tracking-wider">
+            POWERED_BY: OpenRouter API | MODEL: x-ai/grok-4.1-fast
+          </p>
+          <p className="text-xs text-gray-600 font-mono mt-2">
+            CREATED_BY: @lamps_apple |{' '}
+            <a
+              href="https://x.com/lamps_apple"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-amber-500 transition-colors"
+            >
+              FOLLOW_ON_𝕏
+            </a>
+          </p>
+        </footer>
+      </main>
+
+      {/* Help Button */}
+      <button
+        onClick={() => setShowHelp(true)}
+        className="fixed bottom-6 right-6 w-12 h-12 flex items-center justify-center bg-[#111] border border-white/10 text-gray-400 hover:border-amber-500/40 hover:text-amber-500 transition-all z-50"
+        aria-label="Open help"
+      >
+        <HelpCircle className="w-5 h-5" />
+      </button>
+
+      {/* Help Modal */}
+      {showHelp && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 animate-fade-in"
+          onClick={() => setShowHelp(false)}
+        >
+          <div
+            className="relative w-full max-w-lg p-6 bg-[#0d0d0d] border border-amber-500/20 shadow-2xl animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowHelp(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
+              aria-label="Close help"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-lg font-bold text-amber-500 mb-4 font-mono">
+              // HELP_DOCUMENTATION
+            </h2>
+            <div className="space-y-4 text-sm text-gray-300">
+              <div>
+                <h3 className="text-amber-500 font-mono mb-1">PRIMARY_INPUT_DATA</h3>
+                <p className="text-gray-400">Enter your main idea or concept for the image you want to generate.</p>
+              </div>
+              <div>
+                <h3 className="text-amber-500 font-mono mb-1">MODIFIERS</h3>
+                <p className="text-gray-400">Add style directions, mood, or additional parameters to refine your prompt.</p>
+              </div>
+              <div>
+                <h3 className="text-amber-500 font-mono mb-1">STYLE_MATRIX</h3>
+                <p className="text-gray-400">Quick-select visual style presets like Cinematic, Cyberpunk, Fantasy, etc.</p>
+              </div>
+              <div>
+                <h3 className="text-amber-500 font-mono mb-1">IMG_REFERENCE</h3>
+                <p className="text-gray-400">Upload a reference image to analyze and incorporate into your prompt.</p>
+              </div>
+              <div>
+                <h3 className="text-amber-500 font-mono mb-1">CONFIG_FLAGS</h3>
+                <p className="text-gray-400">
+                  <strong>EMILY_JSON_MODE:</strong> Structured JSON output for advanced workflows<br />
+                  <strong>TEST_ELYSIAN:</strong> Alternative poetic prompt style<br />
+                  <strong>VIDEO_SEQ:</strong> Generate text-to-video scene descriptions
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom animations */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .animate-shimmer {
+          animation: shimmer 1.5s linear infinite;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.3s ease-out forwards;
+        }
+        @keyframes scale-in {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in {
+          animation: scale-in 0.3s ease-out forwards;
+        }
+      `}</style>
+    </div>
+  );
+}

@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Loader2,
   Download,
   Copy,
   Check,
   ChevronDown,
+  ChevronRight,
   Flame,
   History,
-  Heart,
-  Coffee,
   DollarSign,
   Sparkles,
   Search,
@@ -18,7 +17,9 @@ import {
   ZoomIn,
   Pencil,
   Upload,
+  Wand2,
 } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -39,8 +40,7 @@ function HistoryTrigger() {
 
   return (
     <div
-      className="fixed top-6 z-50 transition-all duration-300 ease-in-out"
-      style={{ left: isOpen ? 'calc(16rem + 1.5rem)' : '1.5rem' }}
+      className={`fixed top-6 z-50 transition-all duration-300 ease-in-out ${isOpen ? 'left-[calc(16rem+1.5rem)]' : 'left-6'}`}
     >
       <SidebarTrigger className="p-3 bg-black/20 backdrop-blur-md rounded-xl border border-white/10 shadow-lg hover:bg-white/10 transition-all text-white">
         <History className="h-5 w-5" />
@@ -65,7 +65,6 @@ export default function Home() {
   const [fbiProfile, setFbiProfile] = useState<string | null>(null);
   const [osintReport, setOsintReport] = useState<string | null>(null);
   const [isOsintProfiling, setIsOsintProfiling] = useState(false);
-  const [donateOpen, setDonateOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isRoastCopied, setIsRoastCopied] = useState(false);
   const [isProfileCopied, setIsProfileCopied] = useState(false);
@@ -424,10 +423,11 @@ export default function Home() {
           <div className="max-w-6xl mx-auto w-full space-y-24">
 
             {/* Hero Section - Asymmetrical */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
               {/* Left: Title & Description */}
-              <div className="space-y-8">
-                <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="space-y-6 text-center lg:text-left">
+                {/* Badges - centered on mobile */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-amber-400/90 backdrop-blur-sm">
                     <Flame className="w-3 h-3" />
                     Powered by Grok AI
@@ -436,58 +436,56 @@ export default function Home() {
                     href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.06] text-xs font-medium text-emerald-400/90 backdrop-blur-sm hover:bg-white/[0.06] transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 border border-emerald-500/40 text-sm font-semibold text-emerald-400 backdrop-blur-sm hover:from-emerald-500/25 hover:to-teal-500/25 hover:border-emerald-400/60 transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(16,185,129,0.35)]"
                   >
-                    <DollarSign className="w-3 h-3" />
-                    Funded by Grokify CA: 8F2Fvu...BAGs
+                    <DollarSign className="w-4 h-4" />
+                    <span className="font-mono tracking-wide">8F2Fvu...BAGs</span>
                   </a>
                 </div>
 
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center gap-3">
+                {/* Grokify Prompt Feature Card - centered on mobile */}
+                <Link
+                  href="/prompt"
+                  className="group block max-w-sm mx-auto lg:mx-0 p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-rose-500/10 border border-amber-500/30 backdrop-blur-sm hover:from-amber-500/20 hover:via-orange-500/10 hover:to-rose-500/20 hover:border-amber-500/50 transition-all shadow-[0_0_20px_rgba(245,158,11,0.15)] hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg shadow-amber-500/25">
+                        <Wand2 className="w-5 h-5 text-white" />
+                      </div>
+                      <span className="text-lg font-bold text-amber-400 group-hover:text-amber-300 transition-colors">Grokify Prompt</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-amber-500/50 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <p className="text-sm text-neutral-400 group-hover:text-neutral-300 transition-colors leading-relaxed text-left">
+                    Transform any idea into a polished AI prompt. Just describe what you want and let Grok craft the perfect prompt for you.
+                  </p>
+                </Link>
+
+                {/* Title - centered on mobile */}
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[0.95] flex items-center justify-center lg:justify-start gap-2 sm:gap-3">
                   <svg viewBox="0 0 24 24" className="h-[0.8em] w-[0.8em] shrink-0 fill-white">
                     <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
                   </svg>
                   <span className="gradient-text">pressionist</span>
                 </h1>
-                <p className="text-lg md:text-xl text-neutral-300 max-w-md leading-relaxed tracking-tight">
+
+                {/* Description - centered on mobile */}
+                <p className="text-base sm:text-lg md:text-xl text-neutral-300 max-w-md mx-auto lg:mx-0 leading-relaxed tracking-tight">
                   Turn any X timeline into bespoke AI artwork.<br />
                   No login. No API keys. Just a username.
                 </p>
 
-                {/* Support link */}
-                <Dialog open={donateOpen} onOpenChange={setDonateOpen}>
-                  <DialogTrigger asChild>
-                    <button className="text-sm text-neutral-500 hover:text-white transition-colors flex items-center gap-2 group">
-                      <Heart className="w-4 h-4 group-hover:text-rose-500 transition-colors" />
-                      Support this project
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md bg-neutral-900 border-white/10 text-white">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 text-xl">
-                        <Heart className="w-5 h-5 text-rose-500" />
-                        Support X-pressionist
-                      </DialogTitle>
-                      <DialogDescription className="text-neutral-400">
-                        Every donation goes straight to API costs. Thank you.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-3 pt-4">
-                      <a href="https://buymeacoffee.com/applelampsg" target="_blank" rel="noopener noreferrer" className="block">
-                        <Button className="w-full h-12 bg-[#FFDD00] text-black hover:bg-[#FFDD00]/90" onClick={() => setDonateOpen(false)}>
-                          <Coffee className="w-5 h-5 mr-2" />
-                          Buy Me a Coffee
-                        </Button>
-                      </a>
-                      <a href="https://cash.app/$applelamps" target="_blank" rel="noopener noreferrer" className="block">
-                        <Button variant="outline" className="w-full h-12 border-white/10 hover:bg-white/5 text-white" onClick={() => setDonateOpen(false)}>
-                          <DollarSign className="w-5 h-5 mr-2" />
-                          CashApp: $applelamps
-                        </Button>
-                      </a>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                {/* Funded by $GROKIFY - centered on mobile */}
+                <a
+                  href="https://bags.fm/8F2FvujRh6zqoR4wtasocKgw4oPcu3MWK4MG77NwBAGS"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-base sm:text-lg text-neutral-400 hover:text-emerald-400 transition-colors inline-flex items-center justify-center lg:justify-start gap-2 group w-full lg:w-auto"
+                >
+                  <DollarSign className="w-5 h-5 group-hover:text-emerald-400 transition-colors" />
+                  Funded by fees from <span className="font-bold text-emerald-400 group-hover:text-emerald-300">$GROKIFY</span>
+                </a>
 
                 {/* Caricature Upload Modal */}
                 <Dialog open={isCaricatureModalOpen} onOpenChange={(open) => {
@@ -614,6 +612,7 @@ export default function Home() {
                               onClick={handleGenerate}
                               disabled={isBusy || !handle}
                               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/10 rounded-xl text-white hover:bg-white/20 disabled:opacity-0 transition-all"
+                              aria-label="Generate"
                             >
                               <ChevronDown className="-rotate-90 w-4 h-4" />
                             </button>
@@ -770,6 +769,7 @@ export default function Home() {
                     <button
                       onClick={() => setIsLightboxOpen(false)}
                       className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-10"
+                      aria-label="Close lightbox"
                     >
                       <X className="w-6 h-6" />
                     </button>

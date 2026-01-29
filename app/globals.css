@@ -548,3 +548,25 @@ input:focus {
   animation: subtle-float 6s ease-in-out infinite;
   animation-delay: 0.7s;
 }
+
+/* ========================================
+   Grokify Prompt Page Utilities
+   ======================================== */
+
+/* Text glow effects */
+.text-glow-amber {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+}
+
+.text-glow-amber-lg {
+  text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+}
+
+.text-glow-yellow {
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+
+/* Dot glow effect */
+.dot-glow-green {
+  box-shadow: 0 0 8px #22C55E;
+}

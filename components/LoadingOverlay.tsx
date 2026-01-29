@@ -235,10 +235,10 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     return () => clearInterval(timer);
   }, []);
 
-  // Reset states when stage changes
+  // Reset message index when stage changes (but NOT elapsed time - timer should be continuous)
   useEffect(() => {
     if ((type === 'photo' || type === 'jointpic') && stage === 'image') {
-      setElapsedSeconds(0);
+      // Reset activity index for joint pic, but keep elapsed seconds running
       setActivityIndex(0);
     }
     setMessageIndex(0);
@@ -278,7 +278,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
       style={{
         background: `linear-gradient(${gradientAngle}deg, 
@@ -291,7 +291,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     >
       {/* Animated background grid */}
       <div className="absolute inset-0 opacity-[0.03]">
-        <div 
+        <div
           className="absolute inset-0"
           style={{
             backgroundImage: `
@@ -530,7 +530,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
           /* Single orb for other types */
           <div className="relative w-28 h-28 mx-auto mb-8">
             {/* Outer glow */}
-            <div 
+            <div
               className="absolute -inset-4 rounded-full animate-pulse"
               style={{
                 background: 'radial-gradient(circle, rgba(244,63,94,0.3) 0%, transparent 70%)',
@@ -538,7 +538,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
             />
             {/* Spinning rings */}
             <div className="absolute inset-0 rounded-full border-4 border-white/5" />
-            <div 
+            <div
               className="absolute inset-0 rounded-full border-4 border-transparent"
               style={{
                 borderTopColor: '#f43f5e',
@@ -546,7 +546,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
                 animation: 'spin 2s linear infinite',
               }}
             />
-            <div 
+            <div
               className="absolute inset-2 rounded-full border-2 border-transparent"
               style={{
                 borderTopColor: '#fb923c',
@@ -555,7 +555,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
               }}
             />
             {/* Inner orb */}
-            <div 
+            <div
               className="absolute inset-4 rounded-full flex items-center justify-center"
               style={{
                 background: 'linear-gradient(135deg, #f43f5e 0%, #f97316 100%)',
@@ -645,13 +645,12 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
               {[...Array(progressDots)].map((_, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                    i < filledDots
+                  className={`w-3 h-3 rounded-full transition-all duration-500 ${i < filledDots
                       ? 'scale-100'
                       : i === filledDots
                         ? 'scale-110 animate-pulse'
                         : 'scale-75 opacity-30'
-                  }`}
+                    }`}
                   style={{
                     background: i < filledDots
                       ? `linear-gradient(135deg, #f59e0b, #eab308)`

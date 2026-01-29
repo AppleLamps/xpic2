@@ -80,3 +80,8 @@ lerna-debug.log*
 
 # Sentry
 .sentryclirc
+
+# Reference projects
+openrouter-photo-main/
+grok-4-prompt/
+grok-imagine-docs/

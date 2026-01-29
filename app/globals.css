@@ -305,16 +305,14 @@ input:focus {
   border-radius: 44px;
 
   /* Black Titanium gradient */
-  background: linear-gradient(
-    145deg,
-    #2a2a2c 0%,
-    #3a3a3c 15%,
-    #252527 30%,
-    #333335 50%,
-    #2d2d2f 70%,
-    #3f3f41 85%,
-    #2a2a2c 100%
-  );
+  background: linear-gradient(145deg,
+      #2a2a2c 0%,
+      #3a3a3c 15%,
+      #252527 30%,
+      #333335 50%,
+      #2d2d2f 70%,
+      #3f3f41 85%,
+      #2a2a2c 100%);
 
   /* Refined titanium edge effect */
   box-shadow:
@@ -355,11 +353,9 @@ input:focus {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 50%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 50%);
   pointer-events: none;
   z-index: 100;
 }
@@ -495,12 +491,10 @@ input:focus {
 .phone-glow {
   position: absolute;
   inset: -15%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(244, 63, 94, 0.08) 0%,
-    rgba(251, 146, 60, 0.05) 30%,
-    transparent 70%
-  );
+  background: radial-gradient(ellipse at center,
+      rgba(244, 63, 94, 0.08) 0%,
+      rgba(251, 146, 60, 0.05) 30%,
+      transparent 70%);
   filter: blur(80px);
   pointer-events: none;
   z-index: -1;
@@ -514,11 +508,9 @@ input:focus {
   transform: translateX(-50%);
   width: 70%;
   height: 20px;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(0, 0, 0, 0.4) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(ellipse at center,
+      rgba(0, 0, 0, 0.4) 0%,
+      transparent 70%);
   filter: blur(10px);
   z-index: -1;
 }
@@ -529,6 +521,7 @@ input:focus {
     opacity: 0;
     transform: translateY(30px) scale(0.96);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -536,8 +529,15 @@ input:focus {
 }
 
 @keyframes subtle-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .iphone-container {
@@ -570,3 +570,8 @@ input:focus {
 .dot-glow-green {
   box-shadow: 0 0 8px #22C55E;
 }
+
+/* ========================================
+   Grok Imagine Styles - Moved to app/imagine/*.css
+   ======================================== */
+/* Styles are now modularized in app/imagine/ folder */

@@ -38,6 +38,8 @@ No login required. No API keys needed from users. Just enter a username and go.
 | 🔍 **OSINT Dossier** | Comprehensive intelligence-style analysis with viral content deep dive |
 | ✏️ **Caricature** | Upload a photo and get a Times Square street artist-style caricature |
 | ✨ **Grokify Prompt** | Transform any idea into a polished AI prompt with Grok |
+| ⚡ **Grok Imagine** | Generate images & videos with xAI's Grok Imagine model - local IndexedDB gallery |
+| 👥 **Joint Picture** | Generate artwork combining two X accounts together |
 | 🖼️ **38 Art Styles** | 5 categories: Classic, Anime, Modern, Artistic, and Fun (see [full list](#art-styles)) |
 | 📜 **Prompt History** | Local storage-based history with copy/delete functionality |
 | 🔗 **Shareable Links** | Generate shareable URLs for created artwork |
@@ -125,8 +127,9 @@ X-pressionist offers **38 unique art styles** organized into 5 categories:
 | **Database** | [Neon](https://neon.tech/) (Serverless Postgres) |
 | **ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
 | **AI Analysis** | [xAI Grok](https://x.ai/) (grok-4-1-fast) |
-| **Image Generation** | [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
-| **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) |
+| **Image Generation** | [xAI Grok Imagine](https://x.ai/) + [Google Gemini](https://ai.google.dev/) via [OpenRouter](https://openrouter.ai/) |
+| **Video Generation** | [xAI Grok Imagine Video](https://x.ai/) |
+| **Image Storage** | [Vercel Blob](https://vercel.com/docs/storage/vercel-blob) + IndexedDB (local) |
 | **Deployment** | [Vercel](https://vercel.com/) |
 
 ---
@@ -246,6 +249,33 @@ Content-Type: application/json
 { "idea": "A dragon fighting a robot", "style": "cinematic" }
 ```
 
+### Grok Imagine (Image)
+
+```http
+POST /api/imagine
+Content-Type: application/json
+
+{ "prompt": "...", "n": 2, "aspect_ratio": "16:9", "response_format": "b64_json" }
+```
+
+### Grok Imagine (Video)
+
+```http
+POST /api/imagine-video
+Content-Type: application/json
+
+{ "prompt": "...", "aspect_ratio": "16:9", "duration": 5 }
+```
+
+### Joint Picture
+
+```http
+POST /api/joint-pic
+Content-Type: application/json
+
+{ "handle1": "username1", "handle2": "username2" }
+```
+
 ---
 
 ## Project Structure
@@ -256,18 +286,25 @@ xpressionist/
 │   ├── api/
 │   │   ├── analyze-account/    # Profile analysis → image prompt
 │   │   ├── generate-image/     # Prompt → Gemini image
+│   │   ├── imagine/            # Grok Imagine image generation
+│   │   ├── imagine-video/      # Grok Imagine video generation
+│   │   ├── joint-pic/          # Joint picture for two accounts
 │   │   ├── roast-account/      # Comedy roast generator
 │   │   ├── fbi-profile/        # Satirical FBI report
 │   │   ├── osint-profile/      # Intelligence dossier
 │   │   ├── caricature/         # Photo → caricature
 │   │   ├── prompt-generate/    # Grokify Prompt generator
 │   │   └── upload-image/       # Vercel Blob storage
+│   ├── imagine/                # Grok Imagine gallery page
 │   ├── prompt/                 # Grokify Prompt page
 │   ├── share/[id]/             # Shareable artwork pages
 │   ├── globals.css
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
+│   ├── home/                   # Home page sections
+│   ├── imagine/                # Grok Imagine components (gallery, sidebar, input bar)
+│   ├── prompt/                 # Grokify Prompt components
 │   ├── ui/                     # shadcn/ui components
 │   ├── LoadingOverlay.tsx      # Animated loading states
 │   ├── OsintReport.tsx         # OSINT dossier renderer
@@ -279,8 +316,13 @@ xpressionist/
 │   └── schema.ts               # Drizzle schema
 ├── hooks/
 │   └── usePromptHistory.ts
+├── hooks/
+│   ├── usePromptHistory.ts     # Prompt history hook
+│   └── useImagineStore.ts      # Grok Imagine gallery state
 └── lib/
+    ├── circuit-breaker.ts      # API resilience
     ├── fetchWithTimeout.ts     # API timeout handling
+    ├── imagine-storage.ts      # IndexedDB storage for images
     ├── prompt-config.ts        # Grokify Prompt configuration
     ├── schemas.ts              # Zod validation schemas
     └── utils.ts
@@ -326,6 +368,7 @@ X-pressionist uses specialized AI personas powered by Grok:
 | **OSINT Analyst** | `/api/osint-profile` | Elite intelligence analyst building comprehensive dossiers |
 | **Street Artist** | `/api/caricature` | NYC Times Square caricature artist with quick wit |
 | **Prompt Alchemist** | `/api/prompt-generate` | Expert prompt engineer transforming ideas into polished AI prompts |
+| **Grok Imagine** | `/api/imagine` | xAI's native image generation with local gallery storage |
 
 ---
 

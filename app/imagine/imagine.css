@@ -1,0 +1,66 @@
+/* ========================================
+   Grok Imagine - Light Theme (OpenRouter Style)
+   Base styles - other modules imported in ImagineClient.tsx
+   ======================================== */
+
+/* CSS Variables */
+.imagine-layout {
+    --im-bg-primary: #ffffff;
+    --im-bg-secondary: #f8f9fa;
+    --im-bg-tertiary: #f1f3f4;
+    --im-bg-card: #ffffff;
+    --im-bg-hover: #e8eaed;
+    --im-text-primary: #202124;
+    --im-text-secondary: #5f6368;
+    --im-text-muted: #9aa0a6;
+    --im-accent: #1a1a1a;
+    --im-accent-hover: #333333;
+    --im-border: #e0e0e0;
+    --im-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --im-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --im-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --im-radius-sm: 8px;
+    --im-radius-md: 16px;
+    --im-radius-lg: 24px;
+    --im-transition: 150ms ease;
+    --im-sidebar-width: 260px;
+}
+
+/* Layout */
+.imagine-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--im-bg-primary);
+    color: var(--im-text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Header - hidden for minimal look like OpenRouter */
+.imagine-header {
+    display: none;
+}
+
+/* Scrollbar Styling */
+.imagine-layout ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.imagine-layout ::-webkit-scrollbar-track {
+    background: var(--im-bg-secondary);
+}
+
+.imagine-layout ::-webkit-scrollbar-thumb {
+    background: var(--im-border);
+    border-radius: 4px;
+}
+
+.imagine-layout ::-webkit-scrollbar-thumb:hover {
+    background: var(--im-text-muted);
+}
+
+/* Selection */
+.imagine-layout ::selection {
+    background-color: var(--im-accent);
+    color: white;
+}

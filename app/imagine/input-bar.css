@@ -1,0 +1,403 @@
+/* ========================================
+   Imagine Input Bar Styles
+   ======================================== */
+
+.imagine-input-bar {
+    position: fixed;
+    bottom: 1.5rem;
+    left: calc(var(--im-sidebar-width) + 50%);
+    transform: translateX(calc(-50% - var(--im-sidebar-width) / 2));
+    width: calc(100% - var(--im-sidebar-width) - 3rem);
+    max-width: 600px;
+    z-index: 100;
+    transition: all var(--im-transition);
+}
+
+.imagine-layout--sidebar-collapsed .imagine-input-bar {
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 3rem);
+}
+
+.imagine-input-bar__container {
+    display: flex;
+    flex-direction: column;
+    background: var(--im-bg-card);
+    border: 1px solid var(--im-border);
+    border-radius: 20px;
+    padding: 16px 20px 12px 20px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.imagine-input-bar__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.imagine-input-bar__input {
+    flex: 1;
+    background: transparent;
+    color: var(--im-text-primary);
+    padding: 0;
+    border: none;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: none;
+    min-height: 24px;
+    max-height: 150px;
+    overflow-y: auto;
+    font-family: inherit;
+    margin-bottom: 4px;
+}
+
+.imagine-input-bar__input::placeholder {
+    color: var(--im-text-muted);
+}
+
+.imagine-input-bar__input:focus {
+    outline: none;
+}
+
+/* Attachment preview */
+.imagine-input-bar__attachment {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--im-border);
+    background: var(--im-bg-tertiary);
+    box-shadow: var(--im-shadow-sm);
+    margin-bottom: 10px;
+}
+
+.imagine-input-bar__attachment-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imagine-input-bar__attachment-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.55);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: var(--im-transition);
+    cursor: pointer;
+}
+
+.imagine-input-bar__attachment-remove:hover {
+    background: rgba(239, 68, 68, 0.85);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Suggestions */
+.imagine-input-bar__suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.imagine-input-bar__suggestion {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--im-border);
+    color: var(--im-text-secondary);
+    font-size: 0.8rem;
+    transition: all var(--im-transition);
+    cursor: pointer;
+}
+
+.imagine-input-bar__suggestion:hover {
+    background: var(--im-bg-hover);
+    color: var(--im-text-primary);
+}
+
+/* Actions row */
+.imagine-input-bar__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.imagine-input-bar__left,
+.imagine-input-bar__center,
+.imagine-input-bar__right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.imagine-input-bar__center {
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+/* Icon buttons */
+.imagine-input-bar__icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    color: var(--im-text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.imagine-input-bar__icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.imagine-input-bar__icon-btn:hover:not(:disabled) {
+    color: var(--im-text-primary);
+    background: var(--im-bg-tertiary);
+}
+
+.imagine-input-bar__icon-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Type toggle (Image/Video) */
+.imagine-input-bar__type-toggle {
+    display: flex;
+    padding: 4px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.imagine-input-bar__type-btn {
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--im-text-muted);
+    cursor: pointer;
+    transition: all var(--im-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.imagine-input-bar__type-btn.active {
+    background: var(--im-accent);
+    color: white;
+}
+
+/* Dropdowns */
+.imagine-input-bar__dropdown {
+    position: relative;
+}
+
+.imagine-input-bar__dropdown-trigger {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--im-border);
+    border-radius: 10px;
+    color: var(--im-text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.2;
+    transition: var(--im-transition);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+    cursor: pointer;
+    gap: 6px;
+}
+
+.imagine-input-bar__dropdown-trigger:hover {
+    border-color: var(--im-text-muted);
+    color: var(--im-text-primary);
+}
+
+.imagine-input-bar__dropdown-trigger--compact {
+    max-width: 44px;
+    min-width: 44px;
+    justify-content: center;
+    padding: 6px 8px;
+}
+
+.imagine-input-bar__dropdown-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    min-width: 120px;
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.10);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+    z-index: 120;
+}
+
+.imagine-input-bar__dropdown-item {
+    width: 100%;
+    text-align: center;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--im-text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--im-transition);
+}
+
+.imagine-input-bar__dropdown-item:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* Generate button */
+.imagine-input-bar__generate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--im-accent);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.imagine-input-bar__generate-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.imagine-input-bar__generate-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    background: var(--im-accent-hover);
+}
+
+.imagine-input-bar__generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Cancel button */
+.imagine-input-bar__cancel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #ef4444;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.imagine-input-bar__cancel-btn:hover {
+    background: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .imagine-input-bar {
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 2rem);
+        bottom: 1rem;
+    }
+
+    .imagine-input-bar__container {
+        padding: 14px 16px 10px 16px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 600px) {
+    .imagine-input-bar__actions {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .imagine-input-bar__left {
+        order: 1;
+    }
+
+    .imagine-input-bar__right {
+        order: 2;
+        margin-left: auto;
+    }
+
+    .imagine-input-bar__center {
+        order: 3;
+        width: 100%;
+        margin-top: 4px;
+        justify-content: space-between;
+        border-top: 1px solid var(--im-border);
+        padding-top: 12px;
+    }
+
+    .imagine-input-bar__dropdown {
+        flex: 1;
+        min-width: 0;
+        margin-right: 6px;
+    }
+
+    .imagine-input-bar__dropdown:last-child {
+        margin-right: 0;
+    }
+
+    .imagine-input-bar__dropdown-trigger {
+        width: 100%;
+        max-width: none;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .imagine-input-bar__container {
+        padding: 12px 14px 8px 14px;
+    }
+
+    .imagine-input-bar__generate-btn,
+    .imagine-input-bar__cancel-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .imagine-input-bar__icon-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .imagine-input-bar__icon-btn svg {
+        width: 18px;
+        height: 18px;
+    }
+}

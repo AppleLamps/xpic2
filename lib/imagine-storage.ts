@@ -27,13 +27,23 @@ export interface Folder {
 
 class ImagineStorage {
     private db: IDBDatabase | null = null;
-    private ready: Promise<void>;
+    private ready: Promise<void> | null = null;
 
     constructor() {
-        this.ready = this.initDB();
+        // Defer initialization to avoid SSR issues
+        if (typeof window !== 'undefined' && typeof indexedDB !== 'undefined') {
+            this.ready = this.initDB();
+        }
     }
 
     async waitReady(): Promise<void> {
+        // Lazy init for client-side
+        if (!this.ready) {
+            if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
+                return Promise.resolve(); // SSR - no-op
+            }
+            this.ready = this.initDB();
+        }
         return this.ready;
     }
 
@@ -276,7 +286,7 @@ class ImagineStorage {
     }
 
     async getStorageEstimate(): Promise<{ used: number; quota: number }> {
-        if (navigator.storage && navigator.storage.estimate) {
+        if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.estimate) {
             const estimate = await navigator.storage.estimate();
             return {
                 used: estimate.usage || 0,
@@ -288,7 +298,7 @@ class ImagineStorage {
 
     static isSupported(): boolean {
         try {
-            return typeof indexedDB !== 'undefined' && indexedDB !== null;
+            return typeof window !== 'undefined' && typeof indexedDB !== 'undefined' && indexedDB !== null;
         } catch {
             return false;
         }

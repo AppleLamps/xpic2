@@ -30,7 +30,10 @@ const VideoRequestResponseSchema = z.object({
 
 // Response schema for video result polling
 const VideoResultSchema = z.object({
-    url: z.string().url().optional(),
+    video: z.object({
+        url: z.string().url(),
+        duration: z.number().optional(),
+    }).optional(),
     status: z.string().optional(),
     error: z.string().optional(),
 });
@@ -177,8 +180,8 @@ export async function POST(req: NextRequest) {
                 const pollValidation = VideoResultSchema.safeParse(pollData);
 
                 if (pollValidation.success) {
-                    if (pollValidation.data.url) {
-                        videoUrl = pollValidation.data.url;
+                    if (pollValidation.data.video?.url) {
+                        videoUrl = pollValidation.data.video.url;
                         break;
                     }
                     if (pollValidation.data.error) {

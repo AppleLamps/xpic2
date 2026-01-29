@@ -86,12 +86,20 @@ export default function ImagineGallery({
                             loading="lazy"
                         />
                     ) : image.url && image.type === 'video' ? (
-                        <div
-                            className="imagine-gallery__video-thumb"
+                        <video
+                            src={image.url}
+                            className="imagine-gallery__image"
                             onClick={() => onImageClick(image)}
-                        >
-                            <Play className="w-8 h-8" />
-                        </div>
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                            onMouseEnter={(e) => e.currentTarget.play()}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.pause();
+                                e.currentTarget.currentTime = 0;
+                            }}
+                        />
                     ) : (
                         <div className="imagine-gallery__missing" onClick={() => onImageClick(image)}>
                             No preview

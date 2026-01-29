@@ -60,8 +60,8 @@ export default function ImagineClient() {
                     }
                     const data = await res.json();
                     store.removePlaceholder(placeholderIds[0]);
-                    if (data.url) {
-                        await store.addVideoUrl(data.url, settings.prompt, settings.aspectRatio);
+                    if (data.video?.url) {
+                        await store.addVideoUrl(data.video.url, settings.prompt, settings.aspectRatio);
                         toast.success('Video generated!');
                     }
                 } else {

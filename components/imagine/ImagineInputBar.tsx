@@ -98,26 +98,24 @@ export default function ImagineInputBar({
             <div className="imagine-input-bar__container">
                 {/* Input Row */}
                 <div className="imagine-input-bar__row">
-                    {/* Attach image button */}
-                    {type === 'image' && (
-                        <>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleImageUpload}
-                            />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="imagine-input-bar__icon-btn"
-                                title="Attach image for editing"
-                                disabled={isGenerating}
-                            >
-                                <Upload className="w-5 h-5" />
-                            </button>
-                        </>
-                    )}
+                    {/* Attach image button - for image editing or image-to-video */}
+                    <>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageUpload}
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="imagine-input-bar__icon-btn"
+                            title={type === 'video' ? 'Add image for image-to-video' : 'Attach image for editing'}
+                            disabled={isGenerating}
+                        >
+                            <Upload className="w-5 h-5" />
+                        </button>
+                    </>
 
                     {/* Textarea */}
                     <textarea

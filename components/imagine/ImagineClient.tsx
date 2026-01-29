@@ -44,6 +44,22 @@ export default function ImagineClient() {
 
             try {
                 if (isVideo) {
+                    // If image is attached, upload it first to get a URL for image-to-video
+                    let imageUrl: string | undefined;
+                    if (settings.editImageBase64) {
+                        const uploadRes = await fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ imageDataUrl: settings.editImageBase64 }),
+                            signal: abortControllerRef.current.signal,
+                        });
+                        if (!uploadRes.ok) {
+                            throw new Error('Failed to upload image for video generation');
+                        }
+                        const uploadData = await uploadRes.json();
+                        imageUrl = uploadData.imageUrl;
+                    }
+
                     const res = await fetch('/api/imagine-video', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -51,6 +67,7 @@ export default function ImagineClient() {
                             prompt: settings.prompt,
                             aspect_ratio: settings.aspectRatio,
                             duration: settings.videoDuration,
+                            ...(imageUrl && { imageUrl }),
                         }),
                         signal: abortControllerRef.current.signal,
                     });

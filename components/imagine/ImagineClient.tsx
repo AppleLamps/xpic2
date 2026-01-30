@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
+import { upload } from '@vercel/blob/client';
 
 // Import modular CSS files
 import '@/app/imagine/imagine.css';
@@ -51,17 +52,26 @@ export default function ImagineClient() {
                     let imageUrl: string | undefined;
 
                     if (settings.editVideoBase64) {
-                        const uploadRes = await fetch('/api/upload-video', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ videoDataUrl: settings.editVideoBase64 }),
-                            signal: abortControllerRef.current.signal,
-                        });
-                        if (!uploadRes.ok) {
-                            throw new Error('Failed to upload video for editing');
+                        // Convert base64 data URL to File for client-side upload
+                        const base64Match = settings.editVideoBase64.match(/^data:video\/(\w+);base64,(.+)$/);
+                        if (!base64Match) {
+                            throw new Error('Invalid video data format');
                         }
-                        const uploadData = await uploadRes.json();
-                        videoUrl = uploadData.videoUrl;
+                        const [, videoType, base64Data] = base64Match;
+                        const binaryString = atob(base64Data);
+                        const bytes = new Uint8Array(binaryString.length);
+                        for (let i = 0; i < binaryString.length; i++) {
+                            bytes[i] = binaryString.charCodeAt(i);
+                        }
+                        const videoBlob = new Blob([bytes], { type: `video/${videoType}` });
+                        const videoFile = new File([videoBlob], `video.${videoType}`, { type: `video/${videoType}` });
+
+                        // Use client-side upload to bypass serverless payload limits
+                        const blob = await upload(videoFile.name, videoFile, {
+                            access: 'public',
+                            handleUploadUrl: '/api/upload-video/token',
+                        });
+                        videoUrl = blob.url;
                     } else if (settings.editImageBase64) {
                         const uploadRes = await fetch('/api/upload-image', {
                             method: 'POST',

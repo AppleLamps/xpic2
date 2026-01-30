@@ -6,6 +6,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'X-pressionist - Transform Your X Profile Into Art',
   description: 'AI-powered cartoon-style artwork generator from your X (Twitter) profile',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-icon.svg',
+  },
 };
 
 export default function RootLayout({

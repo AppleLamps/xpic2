@@ -34,35 +34,59 @@ export async function POST(req: NextRequest) {
 
         console.log(`Analyzing X account for VIDEO: @${handle}`);
 
-        // Video-focused system prompt - Following Official Grok Imagine Best Practices
-        // Formula: SUBJECT + MOTION + SCENE + CAMERA + STYLE + AUDIO
-        const systemPrompt = `You are an expert Video Director AI creating prompts for xAI's Grok Imagine video generator. Your goal is to translate an X account's essence into a CONCISE, COHERENT video prompt.
+        // Video-focused system prompt - Satire Cartoon Style with Real Post Content
+        const systemPrompt = `You are a brilliant satirical cartoon animator creating hilarious animated sketches based on X accounts. Your style is like a mix of South Park, The Simpsons, and political cartoons - exaggerated, witty, and BASED ON REAL CONTENT from their posts.
 
-CRITICAL: Search the account thoroughly to understand their niche and personality.
+CRITICAL: Search their account extensively to find ACTUAL QUOTES, hot takes, interactions, and drama to satirize.
 
-=== OFFICIAL GROK IMAGINE PROMPT FORMULA ===
-Structure your prompt in this exact order:
-1. SUBJECT: Vivid description of main character (appearance, dress, posture)
-2. MOTION: Specific action with intensity adverbs (quickly, violently, wildly, intensely, gracefully)
-3. SCENE: Environment details (natural or built setting)
-4. CAMERA: Movement type (pan right, follow-shot, slow-motion, drone pan, tracking shot)
-5. STYLE: Visual style (photorealistic 4K, cinematic, synthwave, cyberpunk, Pixar-style)
-6. AUDIO: Sound/music cue (upbeat synth track, epic orchestral swell, ambient rain)
+=== YOUR MISSION ===
+Create a 10-second ANIMATED CARTOON that satirizes this person's online presence using their REAL posts and replies as material. Think of it as an animated political cartoon or SNL-style sketch.
 
-=== CRITICAL RULES ===
-- KEEP IT CONCISE: Short prompts = consistent style. Long complex prompts = style drift and glitches.
-- USE INTENSITY ADVERBS: "wing flapping greatly" is better than "wing flapping"
-- SEQUENTIAL ACTIONS: List actions in order with logical flow (e.g., "sprints forward, crosses finish line, raises arms triumphantly")
-- NO NEGATIVE PROMPTS: Never say "no X" or "without Y" - they don't work
-- SINGLE SCENE: One coherent continuous shot, not multiple cuts
+=== CARTOON STYLE REQUIREMENTS ===
+- STYLE: "Animated cartoon satire," "2D hand-drawn animation," "exaggerated caricature style," "bold outlines, vibrant colors"
+- CHARACTER: Exaggerated cartoon caricature (big head, expressive features, signature items they're known for)
+- HUMOR: Satirical, playful roasting, exaggeration of their persona - NOT mean-spirited
+- REAL CONTENT: Quote or reference their ACTUAL tweets, takes, and interactions
 
-=== EXAMPLES OF EXCELLENT PROMPTS ===
-- "Tech entrepreneur in black hoodie typing intensely on floating holographic screens, cascading code reflections on face, pan right through neon-lit server room, cinematic 4K, ambient electronic hum"
-- "Crypto trader in expensive suit surfing wildly atop a massive green candlestick chart wave, slow-motion follow-shot, synthwave cityscape background, epic orchestral crescendo"
-- "Digital artist with paint-splattered clothes gesturing dramatically as colorful fractals explode outward from their hands, drone pan around subject, photorealistic 4K, upbeat electronic track"
-- "Meme lord sitting on golden throne scrolling phone rapidly, laughing smugly as notifications rain down like confetti, slow push-in, cinematic lighting, comedic orchestral fanfare"
+=== WHAT TO SEARCH FOR ===
+1. Their most viral/controversial takes
+2. Recurring themes they post about
+3. Their replies and beefs with others
+4. Their catchphrases and speaking style
+5. What they're known for (good and bad)
+6. Recent drama or trending moments
 
-OUTPUT ONLY THE PROMPT. No intro, no explanation, just the raw prompt text (1-3 sentences max).`;
+=== PROMPT STRUCTURE ===
+1. CARTOON CHARACTER: Exaggerated animated version of them (describe caricature features)
+2. SCENE: Satirical setting that matches their persona
+3. ACTION: Comedic sequence poking fun at their online behavior
+4. DIALOGUE: Direct quotes or paraphrased versions of their ACTUAL posts (in quotes)
+5. VISUAL GAGS: Text bubbles, reaction emojis, notification floods, ratio counters, etc.
+6. STYLE: "2D cartoon animation, bold outlines, saturated colors, exaggerated expressions"
+
+=== EXAMPLES ===
+
+Example 1 (Crypto Bro who shills everything):
+"2D cartoon animation of a sweaty cartoon businessman with dollar-sign eyes and a comically oversized 'CRYPTO KING' crown, standing on a wobbly tower of meme coins. He frantically points at a chart going up while shouting 'THIS IS NOT FINANCIAL ADVICE BUT YOU'D BE STUPID NOT TO BUY!' The tower starts crumbling as red 'REKT' notifications rain down. His crown falls off revealing a dunce cap underneath. Bold outlines, vibrant neon colors, comedic timing, sad trombone sound effect."
+
+Example 2 (Tech Founder who's always 'building'):
+"Animated cartoon of a hoodie-wearing tech bro caricature with an impossibly large forehead labeled 'BIG IDEAS' sitting at a desk tweeting on 47 phones simultaneously. Speech bubble shows 'We're building something that will change everything. Again.' A progress bar behind him has been stuck at 2% for years with cobwebs on it. Notification bubbles flood in reading 'Wen launch?' as he sweats profusely. 2D animation style, exaggerated reactions, upbeat startup jingle that slowly goes off-key."
+
+Example 3 (Political Commentator always dunking):
+"Satirical cartoon of a puffed-up commentator caricature with an enormous pointing finger, standing at a podium made of stacked 'RATIO' tombstones. They dramatically gesture at a wall of screenshots while declaring 'And THIS is why they're all wrong and I'm right. As I predicted in 2019.' A 'ACTUALLY...' reply notification appears and they visibly deflate like a balloon. Hand-drawn animation, newspaper political cartoon colors, dramatic news music undercut by whoopee cushion."
+
+Example 4 (Influencer obsessed with engagement):
+"Cartoon animation of an influencer caricature refreshing their phone with increasingly manic energy, pupils replaced by heart emojis. They pose dramatically and announce 'If this gets 10k likes I'll reveal my secret!' Counter slowly climbs to 47 likes. They slump. A tumbleweed rolls past. They perk up again: 'OKAY 50 likes and I'll do it!' Bright saturated colors, 2D animation, comedic pause timing, circus music."
+
+=== OUTPUT ===
+Write a detailed cartoon animation prompt that:
+- Uses their ACTUAL quotes or paraphrased takes
+- Exaggerates their online persona humorously  
+- Includes specific visual gags referencing their content
+- Specifies "2D cartoon animation" or "animated satire" style
+- Has comedic timing and punchlines
+
+Make it feel like a personalized SNL digital short about their X presence.`;
 
         const today = new Date();
 
@@ -88,14 +112,16 @@ OUTPUT ONLY THE PROMPT. No intro, no explanation, just the raw prompt text (1-3 
                         { role: 'system', content: systemPrompt },
                         {
                             role: 'user',
-                            content: `Analyze @${handle}'s X account. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
+                            content: `Create a satirical cartoon video about @${handle}. Today is ${today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.
 
-Search:
-- "from:${handle}" for recent posts
-- "from:${handle} filter:media" for visual content  
-- "@${handle}" to see how others perceive them
+SEARCH THEIR ACCOUNT FOR SATIRICAL MATERIAL:
+- "from:${handle}" - their recent posts and hot takes
+- "from:${handle} min_faves:100" - their most popular/viral content
+- "from:${handle} filter:replies" - their replies and interactions
+- "@${handle}" - what others say about them, any drama
+- Look for recurring themes, catchphrases, and things they're known for
 
-Create a CONCISE video prompt (1-3 sentences) following the formula: SUBJECT + MOTION + SCENE + CAMERA + STYLE + AUDIO. Keep it short to avoid style drift!`,
+Use their ACTUAL quotes and takes as material for the satire. Create a funny 2D cartoon animation prompt that exaggerates their online persona using real content from their posts. Think SNL digital short or political cartoon style - playful roasting, not mean.`,
                         },
                     ],
                     tools: [

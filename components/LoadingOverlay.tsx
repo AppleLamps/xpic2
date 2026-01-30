@@ -3,8 +3,8 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Search, Sparkles, Paintbrush, Zap, TrendingUp, Eye, Brain, Palette, Check } from 'lucide-react';
 
-type LoadingType = 'photo' | 'roast' | 'fbi' | 'osint' | 'caricature' | 'jointpic';
-type PhotoStage = 'analyze' | 'image';
+type LoadingType = 'photo' | 'roast' | 'fbi' | 'osint' | 'caricature' | 'jointpic' | 'video';
+type PhotoStage = 'analyze' | 'image' | 'video';
 
 interface LoadingOverlayProps {
   type: LoadingType;
@@ -82,6 +82,23 @@ const JOINTPIC_IMAGE_MESSAGES = [
   { text: 'Almost there...', icon: Zap },
 ];
 
+const VIDEO_ANALYZE_MESSAGES = [
+  { text: 'Searching through posts...', icon: Search },
+  { text: 'Finding viral moments...', icon: TrendingUp },
+  { text: 'Analyzing motion & energy...', icon: Eye },
+  { text: 'Studying the vibe...', icon: Brain },
+  { text: 'Crafting the narrative...', icon: Sparkles },
+];
+
+const VIDEO_GENERATION_MESSAGES = [
+  { text: 'Setting up the scene...', icon: Palette },
+  { text: 'Animating the story...', icon: Paintbrush },
+  { text: 'Adding motion effects...', icon: Zap },
+  { text: 'Rendering 10 seconds of magic...', icon: Sparkles },
+  { text: 'Encoding the video...', icon: Eye },
+  { text: 'Almost there...', icon: Check },
+];
+
 // Activity log entries for joint pic (simulated search queries)
 const ACTIVITY_LOG_ENTRIES = [
   { query: 'from:{user1}', status: 'searching' },
@@ -104,6 +121,7 @@ const DURATIONS: Record<LoadingType, number> = {
   osint: 90,
   caricature: 45,
   jointpic: 60,
+  video: 90,
 };
 
 // Particle component for the orb trails
@@ -131,6 +149,9 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     if (type === 'jointpic') {
       return stage === 'image' ? JOINTPIC_IMAGE_MESSAGES : JOINTPIC_ANALYZE_MESSAGES;
     }
+    if (type === 'video') {
+      return stage === 'video' ? VIDEO_GENERATION_MESSAGES : VIDEO_ANALYZE_MESSAGES;
+    }
     if (type === 'roast') return ROAST_MESSAGES;
     if (type === 'fbi') return FBI_MESSAGES;
     if (type === 'caricature') return CARICATURE_MESSAGES;
@@ -155,6 +176,14 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
         adjustedProgress = Math.min((elapsedSeconds / 45) * 70, 70);
       } else {
         adjustedProgress = 70 + Math.min((elapsedSeconds / 20) * 30, 29);
+      }
+    }
+
+    if (type === 'video') {
+      if (stage === 'analyze') {
+        adjustedProgress = Math.min((elapsedSeconds / 20) * 30, 30);
+      } else {
+        adjustedProgress = 30 + Math.min((elapsedSeconds / 60) * 69, 69);
       }
     }
 
@@ -254,7 +283,7 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
 
   const currentMessage = messages[messageIndex] || messages[0];
   const IconComponent = currentMessage.icon;
-  const stepInfo = (type === 'photo' || type === 'jointpic') ? (stage === 'analyze' ? 'Step 1 of 2' : 'Step 2 of 2') : null;
+  const stepInfo = (type === 'photo' || type === 'jointpic' || type === 'video') ? (stage === 'analyze' ? 'Step 1 of 2' : 'Step 2 of 2') : null;
   const isJointPic = type === 'jointpic';
   const progressDots = 12;
   const filledDots = Math.floor((progress / 100) * progressDots);
@@ -265,6 +294,9 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
     }
     if (type === 'jointpic') {
       return stage === 'analyze' ? 'Analyzing Both Profiles' : 'Generating Joint Picture';
+    }
+    if (type === 'video') {
+      return stage === 'analyze' ? 'Analyzing Profile' : 'Generating Video';
     }
     if (type === 'roast') return 'Crafting Your Roast';
     if (type === 'fbi') return 'Building Profile';
@@ -646,10 +678,10 @@ export function LoadingOverlay({ type, stage, username, username2 }: LoadingOver
                 <div
                   key={i}
                   className={`w-3 h-3 rounded-full transition-all duration-500 ${i < filledDots
-                      ? 'scale-100'
-                      : i === filledDots
-                        ? 'scale-110 animate-pulse'
-                        : 'scale-75 opacity-30'
+                    ? 'scale-100'
+                    : i === filledDots
+                      ? 'scale-110 animate-pulse'
+                      : 'scale-75 opacity-30'
                     }`}
                   style={{
                     background: i < filledDots

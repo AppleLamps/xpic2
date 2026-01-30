@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
 
         // Step 2: Poll for result
         const startTime = Date.now();
-        let videoUrl: string | null = null;
+        let resultVideoUrl: string | null = null;
         let lastError: string | null = null;
 
         while (Date.now() - startTime < VIDEO_POLL_TIMEOUT) {
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
 
                 if (pollValidation.success) {
                     if (pollValidation.data.video?.url) {
-                        videoUrl = pollValidation.data.video.url;
+                        resultVideoUrl = pollValidation.data.video.url;
                         break;
                     }
                     if (pollValidation.data.error) {
@@ -214,14 +214,14 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        if (videoUrl) {
+        if (resultVideoUrl) {
             recordSuccess(breakerKey);
             console.log('Video generated successfully');
             return NextResponse.json(
                 {
                     video: {
                         id: request_id,
-                        url: videoUrl,
+                        url: resultVideoUrl,
                     }
                 },
                 { headers: corsHeaders }

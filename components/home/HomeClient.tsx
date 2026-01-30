@@ -16,6 +16,11 @@ import {
   Pencil,
   Users,
   Zap,
+  Video,
+  Check,
+  Copy,
+  Download,
+  RefreshCw,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -117,6 +122,17 @@ export default function Home() {
   const [isJointPicImageLoading, setIsJointPicImageLoading] = useState(true);
   const [showJointPicPrompt, setShowJointPicPrompt] = useState(false);
 
+  // Video generation feature state (Beta)
+  const [isVideoGenerating, setIsVideoGenerating] = useState(false);
+  const [videoLoadingStage, setVideoLoadingStage] = useState<'analyze' | 'video' | null>(null);
+  const [videoResult, setVideoResult] = useState<{
+    videoPrompt: string;
+    videoUrl: string;
+    username: string;
+  } | null>(null);
+  const [showVideoPrompt, setShowVideoPrompt] = useState(false);
+  const [isVideoPromptCopied, setIsVideoPromptCopied] = useState(false);
+
   const { history, addToHistory, deleteFromHistory, clearHistory } = usePromptHistory();
 
   const handleGenerate = async () => {
@@ -212,6 +228,72 @@ export default function Home() {
       setLoadingStage(null);
       setLoadingUsername(null);
       setIsLoading(false);
+    }
+  };
+
+  const handleGenerateVideo = async () => {
+    const normalizedHandle = handle.trim().replace('@', '');
+
+    if (!normalizedHandle) {
+      setInputError('Enter a username');
+      return;
+    }
+
+    setIsVideoGenerating(true);
+    setInputError('');
+    setGlobalError('');
+    setVideoResult(null);
+    setVideoLoadingStage('analyze');
+    setLoadingUsername(normalizedHandle);
+
+    try {
+      // Step 1: Analyze account and generate video prompt
+      const analysisResponse = await fetch('/api/analyze-account-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handle: normalizedHandle }),
+      });
+
+      const analysisData = await analysisResponse.json();
+      if (!analysisResponse.ok) throw new Error(analysisData.error || 'Failed to analyze account');
+      if (!analysisData?.videoPrompt) throw new Error('Failed to generate video prompt');
+
+      setVideoLoadingStage('video');
+
+      // Step 2: Generate video using Grok Imagine Video
+      const videoResponse = await fetch('/api/imagine-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: analysisData.videoPrompt,
+          duration: 10,
+          aspectRatio: '16:9',
+          resolution: '720p',
+        }),
+      });
+
+      const videoData = await videoResponse.json();
+      if (!videoResponse.ok) throw new Error(videoData.error || 'Failed to generate video');
+
+      const videoUrl = videoData.video?.url;
+      if (!videoUrl) throw new Error('Failed to generate video');
+
+      setVideoResult({
+        videoPrompt: analysisData.videoPrompt,
+        videoUrl: videoUrl,
+        username: normalizedHandle,
+      });
+
+      toast.success('Video generated!');
+    } catch (err: unknown) {
+      console.error('Video generation error:', err);
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setGlobalError(message);
+      toast.error(message);
+    } finally {
+      setVideoLoadingStage(null);
+      setLoadingUsername(null);
+      setIsVideoGenerating(false);
     }
   };
 
@@ -594,7 +676,7 @@ export default function Home() {
     }
   };
 
-  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling || isCaricatureLoading || isJointPicLoading;
+  const isBusy = isLoading || isRoasting || isProfiling || isOsintProfiling || isCaricatureLoading || isJointPicLoading || isVideoGenerating;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -627,6 +709,13 @@ export default function Home() {
           stage={jointPicStage || 'analyze'}
           username={jointPicHandle1.trim().replace('@', '') || jointPicResult?.username1}
           username2={jointPicHandle2.trim().replace('@', '') || jointPicResult?.username2}
+        />
+      )}
+      {isVideoGenerating && (
+        <LoadingOverlay
+          type="video"
+          stage={videoLoadingStage || 'analyze'}
+          username={loadingUsername || undefined}
         />
       )}
 
@@ -967,6 +1056,19 @@ export default function Home() {
                             <Sparkles className="w-4 h-4" />
                             Generate Photo
                           </button>
+                          {/* Generate Video Beta Button */}
+                          <button
+                            onClick={handleGenerateVideo}
+                            disabled={isBusy}
+                            className="w-full px-4 py-3.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-xl shadow-lg shadow-black/25 hover:shadow-xl hover:shadow-cyan-500/20 hover:brightness-110 transition-all duration-200 disabled:opacity-50 text-sm flex items-center justify-center gap-2 relative"
+                          >
+                            <Video className="w-4 h-4" />
+                            Generate Video
+                            <span className="ml-1 px-1.5 py-0.5 text-[9px] font-bold bg-white/20 text-white/90 rounded-full border border-white/30 flex items-center gap-0.5">
+                              <FlaskConical className="w-2.5 h-2.5" />
+                              BETA
+                            </span>
+                          </button>
                           {/* Roast, FBI, OSINT buttons - temporarily hidden */}
                           {/* Caricature Button */}
                           <button
@@ -1094,6 +1196,122 @@ export default function Home() {
               onDownload={handleJointPicDownload}
               onGenerateAnother={handleJointPicAnother}
             />
+          )}
+
+          {/* Video Result Section */}
+          {videoResult && (
+            <div className="max-w-4xl mx-auto animate-fade-in space-y-6">
+              <div className="relative group rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-2xl shadow-cyan-900/10 ring-1 ring-white/5">
+                {/* Header Overlay */}
+                <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 z-20 flex items-start justify-between bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+                  <div className="flex items-center gap-3 pointer-events-auto">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-xs font-medium text-white/90">
+                      <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.5)]" />
+                      @{videoResult.username}
+                    </div>
+                  </div>
+                  <div className="pointer-events-auto">
+                    <span className="px-2.5 py-1 text-[10px] font-bold bg-cyan-500/20 text-cyan-300 rounded-full border border-cyan-500/30 backdrop-blur-md flex items-center gap-1.5 shadow-lg">
+                      <Sparkles className="w-3 h-3" />
+                      AI VIDEO BETA
+                    </span>
+                  </div>
+                </div>
+
+                {/* Video Player Container */}
+                <div className="relative aspect-video bg-neutral-900">
+                  <video
+                    src={videoResult.videoUrl}
+                    controls
+                    autoPlay
+                    loop
+                    playsInline
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+
+                {/* Bottom Actions Overlay - Always visible on mobile, nicer on desktop */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 z-20 flex items-end justify-between bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
+                  <div className="pointer-events-auto flex items-center gap-2">
+                    {/* Left side actions if needed */}
+                  </div>
+                  <div className="pointer-events-auto flex items-center gap-3">
+                    <button
+                      onClick={() => setShowVideoPrompt(!showVideoPrompt)}
+                      className={`p-2.5 rounded-xl backdrop-blur-md border transition-all duration-200 ${showVideoPrompt
+                          ? 'bg-white/20 border-white/20 text-white shadow-[0_0_15px_rgba(255,255,255,0.1)]'
+                          : 'bg-black/40 border-white/10 text-neutral-200 hover:bg-black/60 hover:text-white'
+                        }`}
+                      title={showVideoPrompt ? 'Hide Prompt' : 'Show Prompt'}
+                    >
+                      <ChevronDown
+                        className={`w-5 h-5 transition-transform duration-300 ${showVideoPrompt ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                    <a
+                      href={videoResult.videoUrl}
+                      download={`xpic-video-${videoResult.username}.mp4`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium rounded-xl shadow-lg shadow-cyan-900/20 hover:shadow-cyan-500/20 hover:-translate-y-0.5 transition-all duration-200"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden sm:inline">Download</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prompt Section - Clean Slide Down */}
+              {showVideoPrompt && (
+                <div className="animate-in slide-in-from-top-2 fade-in duration-300 px-1">
+                  <div className="relative p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.04] transition-colors group/prompt">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Video Prompt</h3>
+                          <div className="h-px flex-1 bg-white/[0.06]" />
+                        </div>
+                        <p className="text-sm text-neutral-300 leading-relaxed font-light font-mono selection:bg-cyan-500/30 selection:text-cyan-100">
+                          {videoResult.videoPrompt}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(videoResult.videoPrompt);
+                          setIsVideoPromptCopied(true);
+                          toast.success('Prompt copied!');
+                          setTimeout(() => setIsVideoPromptCopied(false), 2000);
+                        }}
+                        className="p-2.5 rounded-xl bg-black/20 hover:bg-black/40 border border-white/5 hover:border-white/10 text-neutral-400 hover:text-white transition-all shrink-0"
+                        title="Copy Prompt"
+                      >
+                        {isVideoPromptCopied ? (
+                          <Check className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reset Action */}
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => {
+                    setVideoResult(null);
+                    setShowVideoPrompt(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="group flex items-center gap-2 px-6 py-2.5 rounded-full text-neutral-500 hover:text-neutral-300 transition-colors text-sm font-medium"
+                >
+                  <RefreshCw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500 opacity-50 group-hover:opacity-100" />
+                  Generate New Video
+                </button>
+              </div>
+            </div>
           )}
 
         </div>

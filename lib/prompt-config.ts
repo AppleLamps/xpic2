@@ -20,8 +20,8 @@ export const API_CONFIG = {
 } as const;
 
 export const PROMPT_MODELS = {
-  /** Primary model for prompt generation */
-  PRIMARY: 'grok-4.5-latest',
+  /** Primary model for prompt generation, served via OpenRouter */
+  PRIMARY: 'x-ai/grok-4.5',
 } as const;
 
 export const PROMPT_MODES = {
